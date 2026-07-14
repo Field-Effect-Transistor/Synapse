@@ -175,6 +175,9 @@ namespace Hermes {
 
                         while (true) {
                             if (!_prayForTheChunk()) {
+                                if(!stricmp(token.lexeme.c_str(), "mod")) {
+                                    token.type = StandardToken::MOD;
+                                }
                                 return token;
                             }
 

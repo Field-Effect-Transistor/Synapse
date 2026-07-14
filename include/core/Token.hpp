@@ -14,12 +14,11 @@ namespace Hermes {
         //  Service Tokens
         static constexpr TokenType  UNKNOWN     = 0;
         static constexpr TokenType  COMMENT     = 1;
-        static constexpr TokenType  END_OF_LINE = 2;
-        static constexpr TokenType  END_OF_FILE = 3;
-        static constexpr TokenType  SEMICOLON   = 4;
-        static constexpr TokenType  LPAREN      = 5;
-        static constexpr TokenType  RPAREN      = 6;
-        static constexpr TokenType  COMMA       = 7;
+        static constexpr TokenType  END_OF_FILE = 2;
+        static constexpr TokenType  SEMICOLON   = 3;
+        static constexpr TokenType  LPAREN      = 4;
+        static constexpr TokenType  RPAREN      = 5;
+        static constexpr TokenType  COMMA       = 6;
 
         //  Errors
         static constexpr TokenType  ERROR       = 10;
@@ -43,7 +42,6 @@ namespace Hermes {
             switch (t) {
                 case UNKNOWN:     return "UNKNOWN";
                 case COMMENT:     return "COMMENT";
-                case END_OF_LINE: return "END_OF_LINE";
                 case END_OF_FILE: return "END_OF_FILE";
                 case SEMICOLON:   return "SEMICOLON";
                 case LPAREN:      return "LPAREN";
