@@ -2,8 +2,20 @@
 #include "Lexer.hpp"
 
 #include <cctype>
+#include <cstring>
 #include <vector>
 #include <algorithm>
+
+int stricmp(char const *a, char const *b) {
+    for(;;++a, ++b) {
+        int d = tolower(static_cast<unsigned int>(*a)) - tolower(static_cast<unsigned int>(*b));
+        if (d != 0 || !*a) {
+            return d;
+        }
+    }
+
+    return 0;
+}
 
 namespace Hermes {
     Token Lexer::fetchNextToken() {
@@ -77,7 +89,7 @@ namespace Hermes {
                     }
                 }
                 case '%': {
-                    token = Token(StandardToken::MOD, 0, "%", _col, _row);
+                    token = Token(StandardToken::PERCENT, 0, "%", _col, _row);
                     break;
                 }
                 case '^': {
@@ -96,18 +108,18 @@ namespace Hermes {
                     token = Token(StandardToken::COMMA, 0, ",", _col, _row);
                     break;
                 }
-                case '.': {
-                    token = Token(StandardToken::DOT, 0, ".", _col, _row);
-                    break;
-                }
                 case ';': {
                     token = Token(StandardToken::SEMICOLON, 0, ";", _col, _row);
                     break;
                 }
                 default: {
-                    if (isdigit(_chunk[_pos])) {
+                    if (isdigit(_chunk[_pos]) || _chunk[_pos] == '.') {
                         size_t  dot_counter = 0;
                         bool    valid_token = true;
+
+                        if (_chunk[_pos] == '.') {
+                            dot_counter = 1;
+                        }
 
                         token.lexeme = _chunk[_pos];
                         token.row = _row;
@@ -174,6 +186,10 @@ namespace Hermes {
                             }
 
                             ++_pos; ++_col;
+                        }
+
+                        if(!stricmp(token.lexeme.c_str(), "mod")) {
+                            token.type = StandardToken::MOD;
                         }
 
                         return token;

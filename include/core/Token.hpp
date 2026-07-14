@@ -3,11 +3,11 @@
 
 #include <cstdint>
 #include <string>
-#include <iostream> // Для std::ostream
+#include <iomanip>
+#include <iostream>
 
 namespace Hermes {
     
-    // Повертаємо ідеально простий тип
     using TokenType = uint16_t;
 
     struct StandardToken {
@@ -20,7 +20,6 @@ namespace Hermes {
         static constexpr TokenType  LPAREN      = 5;
         static constexpr TokenType  RPAREN      = 6;
         static constexpr TokenType  COMMA       = 7;
-        static constexpr TokenType  DOT         = 8;
 
         //  Errors
         static constexpr TokenType  ERROR       = 10;
@@ -36,6 +35,7 @@ namespace Hermes {
         static constexpr TokenType  DIV         = 203;
         static constexpr TokenType  MOD         = 204;
         static constexpr TokenType  POW         = 205;
+        static constexpr TokenType  PERCENT     = 206;
 
         static constexpr TokenType  USER_DEFINED_START = 1000;
 
@@ -49,7 +49,6 @@ namespace Hermes {
                 case LPAREN:      return "LPAREN";
                 case RPAREN:      return "RPAREN";
                 case COMMA:       return "COMMA";
-                case DOT:         return "DOT";
                 case ERROR:       return "ERROR";
                 case NUMBER:      return "NUMBER";
                 case IDENTIFIER:  return "IDENTIFIER";
@@ -58,8 +57,9 @@ namespace Hermes {
                 case MUL:         return "MUL";
                 case DIV:         return "DIV";
                 case MOD:         return "MOD";
+                case PERCENT:     return "PERCENT";
                 case POW:         return "POW";
-                default:          return "USER_DEFINED"; // Плагіни!
+                default:          return "USER_DEFINED";    //! Plugins
             }
         }
     };  //  struct  StandardToken
@@ -82,9 +82,13 @@ namespace Hermes {
         ): type(t), value(v), lexeme(std::move(l)), column(c), row(r) {}
 
         void print(std::ostream& os) const {
-            os << "[R:" << row << " C:" << column << "] "
-               << StandardToken::toString(type) 
-               << " ('" << lexeme << "')";
+            std::string positionInfo = "[R:" + std::to_string(row) + " C:" + std::to_string(column) + "]";
+            std::string lexemeInfo = "('" + lexeme + "')";
+
+            os << std::left 
+               << std::setw(14) << positionInfo
+               << std::setw(16) << StandardToken::toString(type)
+               << std::setw(25) << lexemeInfo;
             
             if (type == StandardToken::NUMBER) {
                 os << " Val: " << value;
