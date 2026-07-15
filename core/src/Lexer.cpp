@@ -1,4 +1,4 @@
-//  src/core/Lexer.cpp
+//  /core/src/Lexer.cpp
 #include "Lexer.hpp"
 
 #include <cctype>

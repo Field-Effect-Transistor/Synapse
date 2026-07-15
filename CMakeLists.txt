@@ -14,7 +14,9 @@ if(BUILD_TESTING)
     add_link_options(--coverage)
 endif()
 
-add_subdirectory(src/core)
+add_subdirectory(utils)
+add_subdirectory(core)
+add_subdirectory(cli)
 
 if(BUILD_TESTING)
     add_subdirectory(tests)

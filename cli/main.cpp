@@ -1,4 +1,4 @@
-//  src/core/main.cpp
+//  /cli/main.cpp
 #include <iostream>
 #include <sstream>
 #include <vector>

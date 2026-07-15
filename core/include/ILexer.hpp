@@ -1,7 +1,7 @@
-//  include/interface/ILexer.hpp
+//  /core/include/ILexer.hpp
 #pragma once
 
-#include "core/Token.hpp"
+#include "Token.hpp"
 
 #include <cstddef>
 #include <vector>
