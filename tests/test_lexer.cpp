@@ -59,7 +59,7 @@ TEST(LexerTest, BasicServiceTokens) {
 }
 
 TEST(LexerTest, BasicMathTokens) {
-    std::string code = "12.5 + 45 * (2 - 0.5)";
+    std::string code = "12.5 + 45 * (2 - .5) / 1.";
     std::istringstream stream(code);
     Lexer lexer(stream, 15);
 
@@ -80,6 +80,27 @@ TEST(LexerTest, BasicMathTokens) {
     t = lexer.fetchNextToken();
     EXPECT_EQ(t.type, StandardToken::MUL);
 
+    t = lexer.fetchNextToken();
+    EXPECT_EQ(t.type, StandardToken::LPAREN);
+
+    t = lexer.fetchNextToken();
+    EXPECT_EQ(t.type, StandardToken::NUMBER);
+
+    t = lexer.fetchNextToken();
+    EXPECT_EQ(t.type, StandardToken::SUB);
+
+    t = lexer.fetchNextToken();
+    EXPECT_EQ(t.type, StandardToken::NUMBER);
+
+    t = lexer.fetchNextToken();
+    EXPECT_EQ(t.type, StandardToken::RPAREN);
+
+    t  = lexer.fetchNextToken();
+    EXPECT_EQ(t.type, StandardToken::DIV);
+
+    t  = lexer.fetchNextToken();
+    EXPECT_EQ(t.type, StandardToken::NUMBER);
+
 }
 
 TEST(LexerTest, EndOfFileBehavior) {
@@ -91,7 +112,7 @@ TEST(LexerTest, EndOfFileBehavior) {
 }
 
 TEST(LexerTest, IdentifiersAndKeywords) {
-    std::string code = "My_var1 mod MoD";
+    std::string code = "My_var1 mod MoD _v";
 
     for (size_t chunk_size = 1; chunk_size <= code.size(); ++chunk_size) {
         std::istringstream stream(code);
@@ -111,6 +132,22 @@ TEST(LexerTest, IdentifiersAndKeywords) {
         t = lexer.fetchNextToken();
         EXPECT_EQ(t.type, StandardToken::MOD);
         EXPECT_EQ(t.lexeme, "MoD");
+
+        // 4. Ключове слово MoD (змішаний регістр)
+        t = lexer.fetchNextToken();
+        EXPECT_EQ(t.type, StandardToken::IDENTIFIER);
+        EXPECT_EQ(t.lexeme, "_v");
+    }
+
+
+    code = "l123456789";
+    for (size_t chunk_size = 1; chunk_size <= code.size(); ++chunk_size) {
+        std::istringstream stream(code);
+        Lexer lexer(stream, chunk_size);
+
+        Token t = lexer.fetchNextToken();
+        EXPECT_EQ(t.type, StandardToken::IDENTIFIER);
+        EXPECT_EQ(t.lexeme, "l123456789");
     }
 }
 
@@ -198,13 +235,13 @@ TEST(LexerTest, IgnoresWhitespacesAndCarriageReturns) {
     Token t = lexer.fetchNextToken();
     EXPECT_EQ(t.type, StandardToken::NUMBER);
     EXPECT_DOUBLE_EQ(t.value, 100.0);
-    // 100 знаходиться на рядку 0. Позиція: пробіл(1) + табуляція(1) = індекс 2
+    // 100 знаходиться на рядку 0. Позиція: пробіл(1) + табуляція(1) + пробіл(1) = індекс 3
     EXPECT_EQ(t.row, 0);
-    EXPECT_EQ(t.column, 2);
+    EXPECT_EQ(t.column, 3);
 
     t = lexer.fetchNextToken();
     EXPECT_EQ(t.type, StandardToken::ADD);
-    // Плюс знаходиться на рядку 1 (після \n). Позиція: пробіл(1) + табуляція(1) = індекс 2
+    // Плюс знаходиться на рядку 1 (після \n). Позиція: пробіл(1) + табуляція(1) + пробіл(1) = індекс 2
     EXPECT_EQ(t.row, 1);
-    EXPECT_EQ(t.column, 2);
+    EXPECT_EQ(t.column, 3);
 }
