@@ -1,6 +1,6 @@
 //  core/include/Lexer.hpp
 #pragma once
-#include "ILexer.hpp"
+#include "interface/ILexer.hpp"
 
 #include <istream>
 #include <string>
