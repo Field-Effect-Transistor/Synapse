@@ -5,9 +5,7 @@ include(FetchContent)
 FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
-  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
-
 set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
@@ -58,9 +56,12 @@ if(LCOV_PATH AND GENHTML_PATH)
         COMMAND ${CMAKE_COMMAND} -E echo "✅ Звіт згенеровано: ${CMAKE_BINARY_DIR}/coverage_report/index.html"
 
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        DEPENDS HermesTests
+        DEPENDS HermesCoreTests HermesUtilsTests
         COMMENT "Запуск тестів та генерація HTML-звіту покриття..."
     )
 else()
     message(WARNING "Утиліти lcov або genhtml не знайдені! Таргет 'coverage' не створено.")
 endif()
+
+add_subdirectory(core_tests)
+add_subdirectory(utils_tests)
