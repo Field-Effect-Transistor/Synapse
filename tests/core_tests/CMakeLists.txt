@@ -1,6 +1,9 @@
 # /tests/core_tests/CMakeLists.txt
 
-add_executable(HermesCoreTests test_lexer.cpp)
+add_executable(HermesCoreTests
+    test_lexer.cpp
+    test_value.cpp    
+)
 
 target_link_libraries(HermesCoreTests
     PRIVATE
