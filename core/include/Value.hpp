@@ -11,6 +11,7 @@ namespace Hermes {
         
         virtual ICustomValue* clone() = 0;
         virtual void destroy() = 0;
+        virtual const char* to_str() const = 0;
     };  //  struct  ICustomValue
 
     class Value {
@@ -120,6 +121,22 @@ namespace Hermes {
                 return _data.as_custom;
             }
             throw std::runtime_error("Not a custom object!!!");
+        }
+
+        std::string to_str() const {
+            switch(type()) {
+                case Type::NUMBER: {
+                    return std::to_string(_data.as_number);
+                }
+                case Type::BOOLEAN: {
+                    return _data.as_bool ? "1" : "0";
+                }
+                case Type::CUSTOM_OBJECT: {
+                    return _data.as_custom->to_str();
+                }
+                default:
+                    return "UNKNOWN";
+            }
         }
 
     };  //  class   Value
