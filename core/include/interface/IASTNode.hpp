@@ -8,7 +8,7 @@ namespace Hermes {
 
     struct IASTNode {
         virtual ~IASTNode() = default;
-        //virtual void destroy() = 0;
+        virtual void destroy() = 0;
 
         virtual Value accept(IVisitor&) = 0;
     };  //  struct  IAstNode

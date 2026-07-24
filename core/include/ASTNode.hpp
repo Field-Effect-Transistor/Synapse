@@ -5,68 +5,94 @@
 #include "interface/IASTNode.hpp"
 #include "Token.hpp"
 
+#include "utils/include/UniquePtr.hpp"
+
 #include <vector>
 #include <memory>
 
+#define ABI_SAFE_ASTNODE_DESTROYER  void destroy() override { delete this; }
+#define ASTNODE_VISITOR_ACCEPT      Value accept(IVisitor& v) override { return v.visit(*this); }
+
 namespace Hermes {
-    struct LeafNode : IASTNode {
-        Value   value;
 
-        LeafNode(const Value& v) : value(v) {};
-        ~LeafNode() {};
-
-        Value accept(IVisitor& v) override {
-            return v.visit(*this);
+    struct ASTNodeDeleter {
+        void operator()(IASTNode* ptr) const {
+            if (ptr) {
+                ptr->destroy();
+            }
         }
+    };  //  struct ASTNodeDeleter
+
+    using ASTNodePtr = UniquePtr<IASTNode, ASTNodeDeleter>;
+
+    struct LeafNode : IASTNode {
+        Value   _value;
+
+        LeafNode(Value value) : _value(std::move(value)) {};
+        ~LeafNode() = default;
+
+        ASTNODE_VISITOR_ACCEPT
+        ABI_SAFE_ASTNODE_DESTROYER
+
     };  //  struct  LeafNode
 
-    struct UnaryNode : IASTNode {
+    struct VariableNode : IASTNode {
         Token   _token;
-        
-        UnaryNode(const Token& t): _token(t) {};
-        ~UnaryNode() {};
 
-        Value accept(IVisitor& v) override {
-            return v.visit(*this);
-        }
+        VariableNode(Token token) : _token(std::move(token)) {};
+        ~VariableNode() = default;
+
+        ASTNODE_VISITOR_ACCEPT
+        ABI_SAFE_ASTNODE_DESTROYER
+    };  //  struct VariableNode
+
+    struct UnaryNode : IASTNode {
+        Token       _token;
+        ASTNodePtr  _child;
+        
+        UnaryNode(
+            Token t,
+            ASTNodePtr  child
+        ): _token(std::move(t)), _child(std::move(child)) {};
+        ~UnaryNode() = default;
+
+        ASTNODE_VISITOR_ACCEPT
+        ABI_SAFE_ASTNODE_DESTROYER
     };  //  struct  ASTUnanyNode
 
     struct BinaryNode : IASTNode {
         Token       _token;
-        IASTNode*   _left;
-        IASTNode*   _right;
+        ASTNodePtr  _left;
+        ASTNodePtr  _right;
 
         BinaryNode(
-            const Token&    t,
-            IASTNode*&      left, 
-            IASTNode*&      right 
-        ) : _token(t) {
-            _left = left;
-            left = 0;
+            Token       t,
+            ASTNodePtr  left, 
+            ASTNodePtr  right 
+        ) : _token(std::move(t)), _left(std::move(left)), _right(std::move(right))  {}
 
-            _right = right;
-            right = 0;
-        }
+        ~BinaryNode() = default;
 
-        ~BinaryNode() {
-            delete _left;
-            delete _right;
-        };
+        ASTNODE_VISITOR_ACCEPT
+        ABI_SAFE_ASTNODE_DESTROYER
     };  //  BinaryNode
 
     struct FunctionNode : IASTNode {
-        std::string             _name;
-        std::vector<IASTNode*>  _args;
+        Token                   _token;
+        std::vector<ASTNodePtr> _args;
 
-        FunctionNode(std::string& n) : _name(n) {
-            
-        }
+        FunctionNode(
+            Token                   token,
+            std::vector<ASTNodePtr> args
+        ) : _token(std::move(token)), _args(std::move(args)) {}
 
-        ~FunctionNode() {
-            for (auto& arg : args) {
-                delete arg;
-            }
-        };
+        ~FunctionNode() = default;
+
+        ASTNODE_VISITOR_ACCEPT
+        ABI_SAFE_ASTNODE_DESTROYER
     };  //  FunctionNode
 
 }   //  namespace   Hermes
+
+#undef  ASTNODE_VISITOR_ACCEPT
+#undef  ABI_SAFE_ASTNODE_DESTROYER
