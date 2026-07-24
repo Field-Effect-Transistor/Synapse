@@ -3,6 +3,7 @@
 add_executable(HermesCoreTests
     test_lexer.cpp
     test_value.cpp    
+    test_ast.cpp
 )
 
 target_link_libraries(HermesCoreTests

@@ -5,21 +5,24 @@ include(FetchContent)
 FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-add_executable(HermesTests test_lexer.cpp)
+# ==============================================================================
+# ГЛОБАЛЬНІ НАЛАШТУВАННЯ ДЛЯ ВСІХ ТЕСТІВ
+# ==============================================================================
+add_compile_options(-fsanitize=address -g)
+add_link_options(-fsanitize=address)
 
-target_link_libraries(HermesTests
-    PRIVATE
-    HermesCore
-    GTest::gtest_main
-)
+# Підключаємо папки з тестами (вони успадкують ASan)
+add_subdirectory(core_tests)
+add_subdirectory(utils_tests)
 
-include(GoogleTest)
-gtest_discover_tests(HermesTests)
-
+# ==============================================================================
+# АВТОМАТИЗАЦІЯ COVERAGE (Таргет 'coverage')
+# ==============================================================================
 find_program(LCOV_PATH lcov)
 find_program(GENHTML_PATH genhtml)
 
@@ -27,7 +30,7 @@ if(LCOV_PATH AND GENHTML_PATH)
     add_custom_target(coverage
         COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
 
-        #   Збір покриття
+        # Збір покриття
         COMMAND ${LCOV_PATH} --capture 
                 --directory ${CMAKE_BINARY_DIR} 
                 --output-file coverage.info 
@@ -61,6 +64,3 @@ if(LCOV_PATH AND GENHTML_PATH)
 else()
     message(WARNING "Утиліти lcov або genhtml не знайдені! Таргет 'coverage' не створено.")
 endif()
-
-add_subdirectory(core_tests)
-add_subdirectory(utils_tests)

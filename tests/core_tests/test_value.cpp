@@ -30,6 +30,8 @@ struct MockObject : public ICustomValue {
         clone_calls = 0;
         destroy_calls = 0;
     }
+    
+    const char* to_str() const override { return "Mock"; }
 };
 
 int MockObject::active_instances = 0;
