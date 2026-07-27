@@ -245,3 +245,65 @@ TEST(LexerTest, IgnoresWhitespacesAndCarriageReturns) {
     EXPECT_EQ(t.row, 1);
     EXPECT_EQ(t.column, 3);
 }
+
+TEST(LexerTest, EOFDuringTokenParsing) {
+    // 1. Односимвольне число на межі EOF (Перевіряє рядок відразу після if (isdigit))
+    {
+        std::istringstream stream("7");
+        Lexer lexer(stream, 1024);
+        Token t = lexer.fetchNextToken();
+        EXPECT_EQ(t.type, StandardToken::NUMBER);
+        EXPECT_EQ(t.lexeme, "7");
+    }
+
+    // 2. Багатосимвольне число на межі EOF (Перевіряє EOF всередині циклу while)
+    {
+        std::istringstream stream("42.5");
+        Lexer lexer(stream, 1024);
+        Token t = lexer.fetchNextToken();
+        EXPECT_EQ(t.type, StandardToken::NUMBER);
+        EXPECT_EQ(t.lexeme, "42.5");
+        EXPECT_DOUBLE_EQ(t.value, 42.5);
+    }
+
+    // 3. Односимвольний ідентифікатор на межі EOF
+    {
+        std::istringstream stream("x");
+        Lexer lexer(stream, 1024);
+        Token t = lexer.fetchNextToken();
+        EXPECT_EQ(t.type, StandardToken::IDENTIFIER);
+        EXPECT_EQ(t.lexeme, "x");
+    }
+
+    // 4. Багатосимвольний ідентифікатор на межі EOF
+    {
+        std::istringstream stream("my_var");
+        Lexer lexer(stream, 1024);
+        Token t = lexer.fetchNextToken();
+        EXPECT_EQ(t.type, StandardToken::IDENTIFIER);
+        EXPECT_EQ(t.lexeme, "my_var");
+    }
+
+    // 5. Ключове слово 'mod' точно на межі EOF
+    {
+        std::istringstream stream("mod");
+        Lexer lexer(stream, 1024);
+        Token t = lexer.fetchNextToken();
+        EXPECT_EQ(t.type, StandardToken::MOD);
+        EXPECT_EQ(t.lexeme, "mod");
+    }
+
+    // 6. Звичайне ділення (перевірка гілки else для case '/')
+    {
+        // Тут після / йде EOF, але перед ним пробіл. 
+        std::istringstream stream("10 / ");
+        Lexer lexer(stream, 1024);
+        
+        Token t1 = lexer.fetchNextToken();
+        EXPECT_EQ(t1.type, StandardToken::NUMBER);
+        
+        Token t2 = lexer.fetchNextToken();
+        EXPECT_EQ(t2.type, StandardToken::DIV);
+        EXPECT_EQ(t2.lexeme, "/");
+    }
+}

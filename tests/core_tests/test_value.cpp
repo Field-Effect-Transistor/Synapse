@@ -184,3 +184,11 @@ TEST_F(ValueTest, GetTypeEnum) {
     Value vb(false);
     EXPECT_EQ(vb.type(), Value::Type::BOOLEAN);
 }
+
+TEST_F(ValueTest, to_str) {
+    Value n(3.15), b_t(true), b_f(false), c(new MockObject(10));
+    EXPECT_EQ(n.to_str(), "3.150000");
+    EXPECT_EQ(b_t.to_str(), "1");
+    EXPECT_EQ(b_f.to_str(), "0");
+    EXPECT_EQ(c.to_str(), "Mock");
+}
