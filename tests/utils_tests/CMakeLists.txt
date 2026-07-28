@@ -1,6 +1,6 @@
 # /tests/utils_tests/CMakeLists.txt
 
-add_executable(HermesUtilsTests test_unique_ptr.cpp)
+add_executable(HermesUtilsTests test_unique_ptr.cpp test_arena_allocator.cpp)
 
 target_link_libraries(HermesUtilsTests
     PRIVATE
