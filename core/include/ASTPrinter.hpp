@@ -14,8 +14,8 @@ namespace Hermes {
         ~ASTPrinter() = default;
 
 
-        Value visit(LeafNode& node) override {
-            _output += node._value.to_str();
+        Value visit(LiteralNode& node) override {
+            _output += node._token.lexeme;
             return Value();
         }
 

@@ -2,6 +2,7 @@
 #pragma once
 
 #include "core/include/Value.hpp"
+#include "UniquePtr.hpp"
 
 namespace Hermes {
     struct IVisitor;
@@ -12,5 +13,15 @@ namespace Hermes {
 
         virtual Value accept(IVisitor&) = 0;
     };  //  struct  IAstNode
+
+    struct ASTNodeDeleter {
+        void operator()(IASTNode* ptr) const {
+            if (ptr) {
+                ptr->destroy();
+            }
+        }
+    };  //  struct ASTNodeDeleter
+
+    using ASTNodePtr = UniquePtr<IASTNode, ASTNodeDeleter>;
 
 };  //  namespace   Hermes

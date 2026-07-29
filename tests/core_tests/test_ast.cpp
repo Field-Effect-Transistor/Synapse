@@ -5,9 +5,9 @@
 using namespace Hermes;
 
 TEST(ASTTest, TestViaPrinter) {
-    ASTNodePtr  _5(new LeafNode(5.)),
-                _3(new LeafNode(3.)),
-                _2(new LeafNode(2.)),
+    ASTNodePtr  _5(new LiteralNode(Token(StandardToken::NUMBER, 5.0, "5", 0, 0))),
+                _3(new LiteralNode(Token(StandardToken::NUMBER, 3.0, "3", 0, 0))),
+                _2(new LiteralNode(Token(StandardToken::NUMBER, 2.0, "2", 0, 0))),
                 _x(new VariableNode(Token(StandardToken::IDENTIFIER, 0, "x", 0, 0)));
     
     ASTNodePtr  _m5(new UnaryNode(Token(StandardToken::SUB, 0, "-", 0, 0), std::move(_5)));
@@ -22,11 +22,11 @@ TEST(ASTTest, TestViaPrinter) {
         Token(StandardToken::IDENTIFIER, 0, "max", 0, 0), 
         std::move(max_args)
     ));
+    
     ASTNodePtr  _root(new BinaryNode(Token(StandardToken::MUL, 0, "*", 0, 0), std::move(_m5p3), std::move(_max2x)));
 
     ASTPrinter printer;
     _root->accept(printer);
 
-    EXPECT_EQ(printer.result(), "( * ( + ( - 5.000000 ) 3.000000 ) ( max 2.000000 x ) )");
+    EXPECT_EQ(printer.result(), "( * ( + ( - 5 ) 3 ) ( max 2 x ) )");
 }
-

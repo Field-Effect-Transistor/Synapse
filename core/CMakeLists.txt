@@ -1,6 +1,6 @@
 # /core/src/CMakeLists.txt
 
-add_library(HermesCore src/Lexer.cpp)
+add_library(HermesCore src/Lexer.cpp src/Parser.cpp)
 
 target_include_directories(HermesCore PUBLIC 
     ${CMAKE_SOURCE_DIR}

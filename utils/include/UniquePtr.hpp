@@ -1,4 +1,5 @@
 //  /utils/include/UniquePtr.hpp
+#pragma once
 
 #include <stddef.h>
 
@@ -43,7 +44,7 @@ namespace Hermes {
             _ptr = ptr;
         }
 
-        explicit UniquePtr(nullptr_t ptr) {
+        UniquePtr(nullptr_t ptr) {
             _ptr = nullptr;
         }
 

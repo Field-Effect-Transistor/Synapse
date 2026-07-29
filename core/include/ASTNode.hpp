@@ -15,26 +15,16 @@
 
 namespace Hermes {
 
-    struct ASTNodeDeleter {
-        void operator()(IASTNode* ptr) const {
-            if (ptr) {
-                ptr->destroy();
-            }
-        }
-    };  //  struct ASTNodeDeleter
+    struct LiteralNode : IASTNode {
+        Token   _token;
 
-    using ASTNodePtr = UniquePtr<IASTNode, ASTNodeDeleter>;
-
-    struct LeafNode : IASTNode {
-        Value   _value;
-
-        LeafNode(Value value) : _value(std::move(value)) {};
-        ~LeafNode() = default;
+        LiteralNode(Token token) : _token(std::move(token)) {};
+        ~LiteralNode() = default;
 
         ASTNODE_VISITOR_ACCEPT
         ABI_SAFE_ASTNODE_DESTROYER
 
-    };  //  struct  LeafNode
+    };  //  struct  LiteralNode
 
     struct VariableNode : IASTNode {
         Token   _token;
@@ -78,7 +68,7 @@ namespace Hermes {
     };  //  BinaryNode
 
     struct FunctionNode : IASTNode {
-        Token                   _token;
+        Token              _token;
         Vector<ASTNodePtr> _args;
 
         FunctionNode(
