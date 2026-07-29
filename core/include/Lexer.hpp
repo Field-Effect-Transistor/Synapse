@@ -4,6 +4,7 @@
 
 #include <istream>
 #include <string>
+#include "Vector.hpp"
 
 namespace Hermes {
 
@@ -15,7 +16,7 @@ namespace Hermes {
 //        LexerBrainFunc  _brain = nullptr;
 
         size_t _chunk_size;
-        std::vector<char>       _chunk;
+        Vector<char>    _chunk;
         size_t  _bytes_read = 0;
         size_t  _pos = 0;
 

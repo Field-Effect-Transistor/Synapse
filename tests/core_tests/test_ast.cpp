@@ -14,7 +14,7 @@ TEST(ASTTest, TestViaPrinter) {
 
     ASTNodePtr  _m5p3(new BinaryNode(Token(StandardToken::ADD, 0, "+", 0, 0), std::move(_m5), std::move(_3)));
 
-    std::vector<ASTNodePtr> max_args;
+    Vector<ASTNodePtr> max_args;
     max_args.push_back(std::move(_2));
     max_args.push_back(std::move(_x));
 

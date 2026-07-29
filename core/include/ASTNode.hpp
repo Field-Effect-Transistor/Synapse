@@ -7,7 +7,7 @@
 
 #include "utils/include/UniquePtr.hpp"
 
-#include <vector>
+#include "Vector.hpp"
 #include <memory>
 
 #define ABI_SAFE_ASTNODE_DESTROYER  void destroy() override { delete this; }
@@ -79,11 +79,11 @@ namespace Hermes {
 
     struct FunctionNode : IASTNode {
         Token                   _token;
-        std::vector<ASTNodePtr> _args;
+        Vector<ASTNodePtr> _args;
 
         FunctionNode(
             Token                   token,
-            std::vector<ASTNodePtr> args
+            Vector<ASTNodePtr> args
         ) : _token(std::move(token)), _args(std::move(args)) {}
 
         ~FunctionNode() = default;

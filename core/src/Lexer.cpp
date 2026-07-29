@@ -3,7 +3,6 @@
 
 #include <cctype>
 #include <cstring>
-#include <vector>
 #include <algorithm>
 
 int stricmp(char const *a, char const *b) {
