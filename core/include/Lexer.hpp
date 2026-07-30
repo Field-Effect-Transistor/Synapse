@@ -47,11 +47,13 @@ namespace Hermes {
     }
 
     public:
-        Lexer(const Lexer&) = delete;
-        Lexer(Lexer&&) = delete;
+        Lexer() = delete;
 
+        Lexer(Lexer&&) = delete;
+        Lexer& operator=(Lexer&&) = delete;
+
+        Lexer(const Lexer&) = delete;
         Lexer& operator=(const Lexer&) = delete;
-        Lexer&& operator=(Lexer&&) = delete;
 
         Lexer(std::istream& is, size_t chunk_size = 1024) : _is(is), _chunk_size(chunk_size), _chunk(_chunk_size) {}
 //        Lexer(std::istream& is, LexerBrainFunc b) : _is(is) { loadRule(b); }
