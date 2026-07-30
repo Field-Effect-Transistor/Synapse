@@ -19,5 +19,5 @@ add_subdirectory(core)
 add_subdirectory(cli)
 
 if(BUILD_TESTING)
-    add_subdirectory(tests)
+    add_subdirectory(tests EXCLUDE_FROM_ALL)
 endif()

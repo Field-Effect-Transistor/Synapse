@@ -1,49 +1,71 @@
 //  /cli/main.cpp
 #include <iostream>
 #include <sstream>
-#include <vector>
 #include <string>
 
 #include "Lexer.hpp"
+#include "Parser.hpp"
+#include "ASTPrinter.hpp"
 
-void runTest(const std::string& testName, const std::string& code) {
+using namespace Hermes;
+
+void runParserTest(const std::string& testName, const std::string& code) {
     std::cout << "========== ТЕСТ: " << testName << " ==========\n";
-    std::cout << "Код:\n" << code << "\n--------------------------------\n";
+    std::cout << "Вихідний код : " << code << "\n";
 
-    std::istringstream stream(code);
-    Hermes::Lexer lexer(stream, 15);
-
-    while (true) {
-        Hermes::Token t = lexer.fetchNextToken();
+    try {
+        // 1. Лексичний аналіз
+        std::istringstream stream(code);
+        Lexer lexer(stream, 1024);
+        Vector<Token> tokens;
         
-        t.print(std::cout); // Використовуємо твій новий метод!
-        std::cout << '\n';
-
-        if (t.type == Hermes::StandardToken::END_OF_FILE) {
-            break;
+        while (true) {
+            Token t = lexer.fetchNextToken();
+            if (t.type != StandardToken::COMMENT) {
+                tokens.push_back(std::move(t));
+            }
+            if (tokens.back().type == StandardToken::END_OF_FILE) break;
         }
+
+        // 2. Синтаксичний аналіз
+        Parser parser(tokens);
+        ASTNodePtr root = parser.parse(tokens);
+
+        if (!root) {
+            std::cout << "ERROR: empty ast (EOF).\n\n";
+            return;
+        }
+
+        // 3. Друкуємо AST
+        ASTPrinter printer;
+        root->accept(printer);
+        std::cout << "AST (LISP)   : " << printer.result() << "\n";
+
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << "\n";
     }
-    std::cout << "\n\n";
+
+    std::cout << "------------------------------------------------\n\n";
 }
 
 int main() {
-    // 1. Базова математика та ігнорування пробілів
-    runTest("Базова математика", 
-            "12.5 + 45 * (2 - 0.5) / 3 ^ 2");
+    // 1. Перевірка пріоритетів (+ та *)
+    runParserTest("Пріоритет операцій", "2 + 3 * 4");
 
-    // 2. Ідентифікатори, розділювачі та багаторядковість
-    runTest("Змінні та функції", 
-            "max(var_1, 100);\nvar_2 % 3;");
+    // 2. Перевірка дужок (зміна пріоритету)
+    runParserTest("Вплив дужок", "(2 + 3) * 4");
 
-    // 3. Коментарі посеред коду (перевірка межі чанків)
-    // Символ \r\n перевіряє сумісність з Windows
-    runTest("Коментарі", 
-            "100 / // це коментар, він має бути окремим токеном\r\n 2");
+    // 3. Унарні оператори та відсотки
+    runParserTest("Унарний мінус і відсотки", "-50%");
 
-    // 4. Помилки користувача (Неправильні числа та невідомі символи)
-    // Увага на '=' та '@' - їх немає в StandardToken, лексер має видати ERROR
-    runTest("Синтаксичні помилки", 
-            "12.34.56 \n 45abc \n x = 10 @");
+    // 4. Правоасоціативність ступеня
+    runParserTest("Ступінь (Правоасоціативність)", "2 ^ 3 ^ 2");
+
+    // 5. Виклики функцій з аргументами
+    runParserTest("Функції та Змінні", "max(10, 20) * x");
+
+    // 6. Спеціальний тест на обробку синтаксичних помилок
+    runParserTest("Відловлювання помилок", "5 * (10 + 2");
 
     return 0;
 }
