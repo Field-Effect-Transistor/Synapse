@@ -6,6 +6,7 @@
 #include "Lexer.hpp"
 #include "Parser.hpp"
 #include "ASTPrinter.hpp"
+#include "MathEvaluator.hpp"
 
 using namespace Hermes;
 
@@ -40,6 +41,11 @@ void runParserTest(const std::string& testName, const std::string& code) {
         ASTPrinter printer;
         root->accept(printer);
         std::cout << "AST (LISP)   : " << printer.result() << "\n";
+
+        // 4. Обчислюємо результат
+        MathEvaluator eval;
+        Value result = root->accept(eval);
+        std::cout << "Результат    : " << result.getNumber() << "\n";
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n";
