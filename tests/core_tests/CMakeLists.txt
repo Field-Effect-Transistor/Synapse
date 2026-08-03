@@ -5,6 +5,7 @@ add_executable(HermesCoreTests
     test_value.cpp    
     test_ast.cpp
     test_ast_tree_printer.cpp
+    test_parser.cpp
 )
 
 target_link_libraries(HermesCoreTests

@@ -12,7 +12,7 @@ namespace Hermes {
         size_t  _current = 0;
 
     public:
-        Parser() = delete;
+        Parser() = default;
 
         Parser(const Parser&) = delete;
         Parser& operator=(const Parser&) = delete;
@@ -20,7 +20,7 @@ namespace Hermes {
         Parser(Parser&&) = delete;
         Parser& operator=(Parser&&) = delete;
 
-        Parser(Vector<Token>& tokens) : _tokens(&tokens) {}
+//      Parser(Vector<Token>& tokens) : _tokens(&tokens) {}
         ~Parser() = default;
 
     private:
