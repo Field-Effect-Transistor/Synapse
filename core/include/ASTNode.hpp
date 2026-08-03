@@ -10,8 +10,8 @@
 #include "Vector.hpp"
 #include <memory>
 
-#define ABI_SAFE_ASTNODE_DESTROYER  void destroy() override { delete this; }
-#define ASTNODE_VISITOR_ACCEPT      Value accept(IVisitor& v) override { return v.visit(*this); }
+#define _ABI_SAFE_ASTNODE_DESTROYER  void destroy() override { delete this; }
+#define _ASTNODE_VISITOR_ACCEPT      Value accept(IVisitor& v) override { return v.visit(*this); }
 
 namespace Hermes {
 
@@ -21,8 +21,8 @@ namespace Hermes {
         LiteralNode(Token token) : _token(std::move(token)) {};
         ~LiteralNode() = default;
 
-        ASTNODE_VISITOR_ACCEPT
-        ABI_SAFE_ASTNODE_DESTROYER
+        _ASTNODE_VISITOR_ACCEPT
+        _ABI_SAFE_ASTNODE_DESTROYER
 
     };  //  struct  LiteralNode
 
@@ -32,8 +32,8 @@ namespace Hermes {
         VariableNode(Token token) : _token(std::move(token)) {};
         ~VariableNode() = default;
 
-        ASTNODE_VISITOR_ACCEPT
-        ABI_SAFE_ASTNODE_DESTROYER
+        _ASTNODE_VISITOR_ACCEPT
+        _ABI_SAFE_ASTNODE_DESTROYER
     };  //  struct VariableNode
 
     struct UnaryNode : IASTNode {
@@ -46,8 +46,8 @@ namespace Hermes {
         ): _token(std::move(t)), _child(std::move(child)) {};
         ~UnaryNode() = default;
 
-        ASTNODE_VISITOR_ACCEPT
-        ABI_SAFE_ASTNODE_DESTROYER
+        _ASTNODE_VISITOR_ACCEPT
+        _ABI_SAFE_ASTNODE_DESTROYER
     };  //  struct  ASTUnanyNode
 
     struct BinaryNode : IASTNode {
@@ -63,8 +63,8 @@ namespace Hermes {
 
         ~BinaryNode() = default;
 
-        ASTNODE_VISITOR_ACCEPT
-        ABI_SAFE_ASTNODE_DESTROYER
+        _ASTNODE_VISITOR_ACCEPT
+        _ABI_SAFE_ASTNODE_DESTROYER
     };  //  BinaryNode
 
     struct FunctionNode : IASTNode {
@@ -78,11 +78,11 @@ namespace Hermes {
 
         ~FunctionNode() = default;
 
-        ASTNODE_VISITOR_ACCEPT
-        ABI_SAFE_ASTNODE_DESTROYER
+        _ASTNODE_VISITOR_ACCEPT
+        _ABI_SAFE_ASTNODE_DESTROYER
     };  //  FunctionNode
 
 }   //  namespace   Hermes
 
-#undef  ASTNODE_VISITOR_ACCEPT
-#undef  ABI_SAFE_ASTNODE_DESTROYER
+#undef  _ASTNODE_VISITOR_ACCEPT
+#undef  _ABI_SAFE_ASTNODE_DESTROYER
