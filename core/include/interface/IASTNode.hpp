@@ -18,6 +18,10 @@ namespace Hermes {
         friend bool operator==(const IASTNode& left, const IASTNode& right) {
             return left.is_equal(right);
         }
+
+        friend bool operator!=(const IASTNode& left, const IASTNode& right) {
+            return !left.is_equal(right);
+        }
     };  //  struct  IAstNode
 
     struct ASTNodeDeleter {

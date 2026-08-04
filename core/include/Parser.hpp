@@ -74,7 +74,9 @@ namespace Hermes {
             _tokens = &tokens;
             _current = 0;
             
-            if (_isAtEnd()) return nullptr;
+            if (_isAtEnd()) {
+                throw std::runtime_error("Syntax Error: empty equation!");
+            }
 
             ASTNodePtr root = _parseExpression();
 

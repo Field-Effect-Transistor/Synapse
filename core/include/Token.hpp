@@ -92,5 +92,15 @@ namespace Hermes {
                 os << " Val: " << value;
             }
         }
+
+        bool operator==(const Token& other) const {
+            return  this->type == other.type &&
+                    this->value == other.value &&
+                    this->lexeme == other.lexeme;
+        }
+
+        bool operator!=(const Token& other) const {
+            return !(*this == other);
+        }
     };  //  struct  Token
 };  //  namespace   Hermes
