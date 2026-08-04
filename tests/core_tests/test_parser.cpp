@@ -44,153 +44,367 @@ using ParserExceptionTest = ParserTest;
 //  ====================
 //      Primitive
 //  ====================
-TEST_F(ParserPrimitiveTest, ParserReturnsNullForEmpty) {
-    Vector<Token> v = make_vector({});
-    
-    Parser parser;
-    auto ast = parser.parse(v);
-    EXPECT_EQ(ast, nullptr);
 
+TEST_F(ParserPrimitiveTest, ParserThrowsForEmptyTokens) {
+    Vector<Token> v = make_vector({});
+    Parser parser;
+    EXPECT_THROW(parser.parse(v), std::runtime_error);
 }
 
 TEST_F(ParserPrimitiveTest, ParseParsesSingleNumberIntoLiteralNode) {
     auto v = make_vector({{StandardToken::NUMBER, 42, "42"}});
     Parser parser;
-    auto ast = parser.parse(v);
+    auto actual = parser.parse(v);
 
-    ASSERT_NE(ast, nullptr) << "AST should not be null";
+    ASSERT_NE(actual, nullptr);
     
-    std::string result = ast_to_string(ast);
-    EXPECT_EQ(result, "42");
-}
-
-/*
-
-### 2. Група: Примітиви (`ParserPrimitiveTest`)
-
-Тут тестуємо базові цеглинки (числа, змінні, порожній ввід).
-
-```cpp
-TEST_F(ParserPrimitiveTest, ParseReturnsNullptrForEmptyTokens) {
-    // 1. Створити вектор токенів, що містить лише END_OF_FILE.
-    // 2. Переконатися, що parser.parse() повертає nullptr.
-}
-
-TEST_F(ParserPrimitiveTest, ParseParsesSingleNumberIntoLiteralNode) {
-    // 1. Вектор з одного числа: NUMBER("42"), END_OF_FILE.
-    // 2. Очікуємо корінь, який є LiteralNode.
-    // 3. Через ASTPrinter перевіряємо, що результат "42" (або як він у тебе форматується).
+    auto expected = ASTNodePtr(new LiteralNode(
+        Token(StandardToken::NUMBER, 42, "42", 0, 0)
+    ));
+    EXPECT_TRUE(actual->is_equal(*expected));
 }
 
 TEST_F(ParserPrimitiveTest, ParseParsesSingleIdentifierIntoVariableNode) {
-    // 1. Вектор з ідентифікатора: IDENTIFIER("x"), END_OF_FILE.
-    // 2. Очікуємо VariableNode.
+    auto v = make_vector({{StandardToken::IDENTIFIER, 0, "x"}});
+    Parser parser;
+    auto actual = parser.parse(v);
+
+    ASSERT_NE(actual, nullptr);
+
+    auto expected = ASTNodePtr(new VariableNode(
+        Token(StandardToken::IDENTIFIER, 0, "x", 0, 0)
+    ));
+    EXPECT_TRUE(actual->is_equal(*expected));
 }
 
 TEST_F(ParserPrimitiveTest, ParseParenthesesWrapExpressionCorrectly) {
-    // 1. Вектор: LPAREN, NUMBER("5"), RPAREN, END_OF_FILE.
-    // 2. Дерево має бути таким самим, як і просто для числа "5" (дужки не створюють окремого вузла).
+    auto v = make_vector({
+        {StandardToken::LPAREN, 0, "("},
+        {StandardToken::NUMBER, 5, "5"},
+        {StandardToken::RPAREN, 0, ")"}
+    });
+    Parser parser;
+    auto actual = parser.parse(v);
+
+    ASSERT_NE(actual, nullptr);
+    
+    auto expected = ASTNodePtr(new LiteralNode(
+        Token(StandardToken::NUMBER, 5, "5", 0, 0)
+    ));
+    EXPECT_TRUE(actual->is_equal(*expected));
 }
 
-```
+//  ====================
+//      Operators
+//  ====================
 
----
-
-### 3. Група: Оператори та Пріоритет (`ParserOperatorTest`)
-
-Тут тестуємо бінарні та унарні операції, а головне — чи правильно працює пріоритет (precedence) і асоціативність (associativity).
-
-```cpp
 TEST_F(ParserOperatorTest, ParseCreatesBinaryNodeForAddition) {
-    // 1. Вектор: NUMBER("1"), ADD, NUMBER("2"), EOF.
-    // 2. Перевіряємо, що корінь BinaryNode(+), діти 1 і 2. (напр. "( + 1 2 )")
+    auto v = make_vector({
+        {StandardToken::NUMBER, 1, "1"},
+        {StandardToken::ADD, 0, "+"},
+        {StandardToken::NUMBER, 2, "2"}
+    });
+    Parser parser;
+    auto actual = parser.parse(v);
+
+    ASSERT_NE(actual, nullptr);
+
+    auto expected = ASTNodePtr(new BinaryNode(
+        Token(StandardToken::ADD, 0, "+", 0, 0),
+        ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 1, "1", 0, 0))),
+        ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 2, "2", 0, 0)))
+    ));
+    EXPECT_TRUE(actual->is_equal(*expected));
 }
 
 TEST_F(ParserOperatorTest, ParseRespectsOperatorPrecedence) {
-    // 1. Вектор для виразу "2 + 3 * 4".
-    // 2. Множення має вищий пріоритет.
-    // 3. Очікуване дерево через принтер: "( + 2 ( * 3 4 ) )".
+    // 2 + 3 * 4
+    auto v = make_vector({
+        {StandardToken::NUMBER, 2, "2"},
+        {StandardToken::ADD, 0, "+"},
+        {StandardToken::NUMBER, 3, "3"},
+        {StandardToken::MUL, 0, "*"},
+        {StandardToken::NUMBER, 4, "4"}
+    });
+    Parser parser;
+    auto actual = parser.parse(v);
+
+    ASSERT_NE(actual, nullptr);
+
+    // Будуємо множення (* 3 4)
+    auto right_mul = ASTNodePtr(new BinaryNode(
+        Token(StandardToken::MUL, 0, "*", 0, 0),
+        ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 3, "3", 0, 0))),
+        ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 4, "4", 0, 0)))
+    ));
+
+    // Будуємо корінь (+ 2 (* 3 4))
+    auto expected = ASTNodePtr(new BinaryNode(
+        Token(StandardToken::ADD, 0, "+", 0, 0),
+        ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 2, "2", 0, 0))),
+        std::move(right_mul)
+    ));
+    EXPECT_TRUE(actual->is_equal(*expected));
 }
 
 TEST_F(ParserOperatorTest, ParseParenthesesOverridePrecedence) {
-    // 1. Вектор для виразу "( 2 + 3 ) * 4".
-    // 2. Очікуване дерево: "( * ( + 2 3 ) 4 )".
+    // (2 + 3) * 4
+    auto v = make_vector({
+        {StandardToken::LPAREN, 0, "("},
+        {StandardToken::NUMBER, 2, "2"},
+        {StandardToken::ADD, 0, "+"},
+        {StandardToken::NUMBER, 3, "3"},
+        {StandardToken::RPAREN, 0, ")"},
+        {StandardToken::MUL, 0, "*"},
+        {StandardToken::NUMBER, 4, "4"}
+    });
+    Parser parser;
+    auto actual = parser.parse(v);
+
+    ASSERT_NE(actual, nullptr);
+
+    // Будуємо додавання (+ 2 3)
+    auto left_add = ASTNodePtr(new BinaryNode(
+        Token(StandardToken::ADD, 0, "+", 0, 0),
+        ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 2, "2", 0, 0))),
+        ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 3, "3", 0, 0)))
+    ));
+
+    // Будуємо корінь (* (+ 2 3) 4)
+    auto expected = ASTNodePtr(new BinaryNode(
+        Token(StandardToken::MUL, 0, "*", 0, 0),
+        std::move(left_add),
+        ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 4, "4", 0, 0)))
+    ));
+    EXPECT_TRUE(actual->is_equal(*expected));
 }
 
-TEST_F(ParserOperatorTest, ParseRespectsLeftAssociativityForTermAndExpression) {
-    // 1. Вектор для виразу "10 - 4 - 2".
-    // 2. Має розпарситися як "( - ( - 10 4 ) 2 )", а не "( - 10 ( - 4 2 ) )".
+TEST_F(ParserOperatorTest, ParseRespectsLeftAssociativity) {
+    // 10 - 4 - 2  =>  (10 - 4) - 2
+    auto v = make_vector({
+        {StandardToken::NUMBER, 10, "10"},
+        {StandardToken::SUB, 0, "-"},
+        {StandardToken::NUMBER, 4, "4"},
+        {StandardToken::SUB, 0, "-"},
+        {StandardToken::NUMBER, 2, "2"}
+    });
+    Parser parser;
+    auto actual = parser.parse(v);
+
+    ASSERT_NE(actual, nullptr);
+
+    // Будуємо лівий вузол (- 10 4)
+    auto left_sub = ASTNodePtr(new BinaryNode(
+        Token(StandardToken::SUB, 0, "-", 0, 0),
+        ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 10, "10", 0, 0))),
+        ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 4, "4", 0, 0)))
+    ));
+
+    // Будуємо корінь (- (- 10 4) 2)
+    auto expected = ASTNodePtr(new BinaryNode(
+        Token(StandardToken::SUB, 0, "-", 0, 0),
+        std::move(left_sub),
+        ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 2, "2", 0, 0)))
+    ));
+    EXPECT_TRUE(actual->is_equal(*expected));
 }
 
-TEST_F(ParserOperatorTest, ParseRespectsRightAssociativityForPowerOperator) {
-    // 1. Вектор для "2 ^ 3 ^ 4".
-    // 2. Твій код використовує рекурсію вправо для POW.
-    // 3. Має бути "( ^ 2 ( ^ 3 4 ) )".
+TEST_F(ParserOperatorTest, ParseRespectsRightAssociativityForPower) {
+    // 2 ^ 3 ^ 4  =>  2 ^ (3 ^ 4)
+    auto v = make_vector({
+        {StandardToken::NUMBER, 2, "2"},
+        {StandardToken::POW, 0, "^"},
+        {StandardToken::NUMBER, 3, "3"},
+        {StandardToken::POW, 0, "^"},
+        {StandardToken::NUMBER, 4, "4"}
+    });
+    Parser parser;
+    auto actual = parser.parse(v);
+
+    ASSERT_NE(actual, nullptr);
+
+    // Будуємо праве піддерево (^ 3 4)
+    auto right_pow = ASTNodePtr(new BinaryNode(
+        Token(StandardToken::POW, 0, "^", 0, 0),
+        ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 3, "3", 0, 0))),
+        ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 4, "4", 0, 0)))
+    ));
+
+    // Будуємо корінь (^ 2 (^ 3 4))
+    auto expected = ASTNodePtr(new BinaryNode(
+        Token(StandardToken::POW, 0, "^", 0, 0),
+        ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 2, "2", 0, 0))),
+        std::move(right_pow)
+    ));
+    EXPECT_TRUE(actual->is_equal(*expected));
 }
 
 TEST_F(ParserOperatorTest, ParsePrefixAndPostfixUnaryOperators) {
-    // 1. Вектор для "- 5 %".
-    // 2. Відсоток (POSTFIX) у тебе в `_parseFactor`, а мінус (PREFIX) теж там.
-    // 3. Перевір, як саме формується дерево. Має бути щось на зразок "( - ( % 5 ) )".
+    // - 5 %
+    auto v = make_vector({
+        {StandardToken::SUB, 0, "-"},
+        {StandardToken::NUMBER, 5, "5"},
+        {StandardToken::PERCENT, 0, "%"}
+    });
+    Parser parser;
+    auto actual = parser.parse(v);
+
+    ASSERT_NE(actual, nullptr);
+
+    // Будуємо нижній вузол (% 5)
+    auto percent_node = ASTNodePtr(new UnaryNode(
+        Token(StandardToken::PERCENT, 0, "%", 0, 0),
+        ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 5, "5", 0, 0)))
+    ));
+
+    // Будуємо корінь (- (% 5))
+    auto expected = ASTNodePtr(new UnaryNode(
+        Token(StandardToken::SUB, 0, "-", 0, 0),
+        std::move(percent_node)
+    ));
+    EXPECT_TRUE(actual->is_equal(*expected));
 }
 
-```
+//  ====================
+//      Functions
+//  ====================
 
----
-
-### 4. Група: Функції (`ParserFunctionTest`)
-
-Перевіряємо виклики функцій з різною кількістю аргументів.
-
-```cpp
 TEST_F(ParserFunctionTest, ParseFunctionWithNoArguments) {
-    // 1. Вектор: IDENTIFIER("rand"), LPAREN, RPAREN, EOF.
-    // 2. Очікуємо FunctionNode без аргументів.
+    // rand()
+    auto v = make_vector({
+        {StandardToken::IDENTIFIER, 0, "rand"},
+        {StandardToken::LPAREN, 0, "("},
+        {StandardToken::RPAREN, 0, ")"}
+    });
+    Parser parser;
+    auto actual = parser.parse(v);
+
+    ASSERT_NE(actual, nullptr);
+
+    // Будуємо еталон: порожній вектор аргументів
+    Vector<ASTNodePtr> empty_args;
+    auto expected = ASTNodePtr(new FunctionNode(
+        Token(StandardToken::IDENTIFIER, 0, "rand", 0, 0),
+        std::move(empty_args)
+    ));
+
+    EXPECT_TRUE(actual->is_equal(*expected));
 }
 
 TEST_F(ParserFunctionTest, ParseFunctionWithMultipleArguments) {
-    // 1. Вектор: IDENTIFIER("max"), LPAREN, NUMBER("1"), COMMA, NUMBER("2"), RPAREN, EOF.
-    // 2. Очікуємо FunctionNode з ім'ям "max" та двома дітьми-аргументами.
+    // max(1, 2)
+    auto v = make_vector({
+        {StandardToken::IDENTIFIER, 0, "max"},
+        {StandardToken::LPAREN, 0, "("},
+        {StandardToken::NUMBER, 1, "1"},
+        {StandardToken::COMMA, 0, ","},
+        {StandardToken::NUMBER, 2, "2"},
+        {StandardToken::RPAREN, 0, ")"}
+    });
+    Parser parser;
+    auto actual = parser.parse(v);
+
+    ASSERT_NE(actual, nullptr);
+
+    // Збираємо аргументи
+    Vector<ASTNodePtr> args;
+    args.push_back(ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 1, "1", 0, 0))));
+    args.push_back(ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 2, "2", 0, 0))));
+
+    // Будуємо корінь
+    auto expected = ASTNodePtr(new FunctionNode(
+        Token(StandardToken::IDENTIFIER, 0, "max", 0, 0),
+        std::move(args)
+    ));
+
+    EXPECT_TRUE(actual->is_equal(*expected));
 }
 
 TEST_F(ParserFunctionTest, ParseNestedFunctionCalls) {
-    // 1. Вектор для "sin(max(1, x))".
-    // 2. Очікуємо функцію в аргументі іншої функції.
+    // sin(max(1, x))
+    auto v = make_vector({
+        {StandardToken::IDENTIFIER, 0, "sin"},
+        {StandardToken::LPAREN, 0, "("},
+        {StandardToken::IDENTIFIER, 0, "max"},
+        {StandardToken::LPAREN, 0, "("},
+        {StandardToken::NUMBER, 1, "1"},
+        {StandardToken::COMMA, 0, ","},
+        {StandardToken::IDENTIFIER, 0, "x"},
+        {StandardToken::RPAREN, 0, ")"},
+        {StandardToken::RPAREN, 0, ")"}
+    });
+    Parser parser;
+    auto actual = parser.parse(v);
+
+    ASSERT_NE(actual, nullptr);
+
+    // 1. Будуємо аргументи для max: 1 та x
+    Vector<ASTNodePtr> max_args;
+    max_args.push_back(ASTNodePtr(new LiteralNode(Token(StandardToken::NUMBER, 1, "1", 0, 0))));
+    max_args.push_back(ASTNodePtr(new VariableNode(Token(StandardToken::IDENTIFIER, 0, "x", 0, 0))));
+
+    // 2. Будуємо вузол функції max
+    auto max_node = ASTNodePtr(new FunctionNode(
+        Token(StandardToken::IDENTIFIER, 0, "max", 0, 0),
+        std::move(max_args)
+    ));
+
+    // 3. Будуємо аргументи для sin: туди входить функція max
+    Vector<ASTNodePtr> sin_args;
+    sin_args.push_back(std::move(max_node));
+
+    // 4. Будуємо корінь
+    auto expected = ASTNodePtr(new FunctionNode(
+        Token(StandardToken::IDENTIFIER, 0, "sin", 0, 0),
+        std::move(sin_args)
+    ));
+
+    EXPECT_TRUE(actual->is_equal(*expected));
 }
 
-```
+//  ====================
+//      Exceptions
+//  ====================
 
----
-
-### 5. Група: Обробка помилок (`ParserExceptionTest`)
-
-Оскільки парсер кидає `std::runtime_error`, використовуємо `EXPECT_THROW`.
-
-```cpp
 TEST_F(ParserExceptionTest, ThrowsOnMissingClosingParenthesisInExpression) {
-    // 1. Вектор: LPAREN, NUMBER("5"), EOF (забули RPAREN).
-    // 2. EXPECT_THROW(parser.parse(tokens), std::runtime_error).
-    // За бажанням можна юзати EXPECT_THAT(..., ThrowsMessage("...")) з gmock, щоб перевірити текст помилки.
+    // ( 5 EOF
+    auto v = make_vector({
+        {StandardToken::LPAREN, 0, "("},
+        {StandardToken::NUMBER, 5, "5"}
+    });
+    Parser parser;
+    EXPECT_THROW(parser.parse(v), std::runtime_error);
 }
 
 TEST_F(ParserExceptionTest, ThrowsOnMissingClosingParenthesisInFunctionCall) {
-    // 1. Вектор: IDENTIFIER("sin"), LPAREN, NUMBER("5"), EOF.
-    // 2. EXPECT_THROW(..., std::runtime_error).
+    // sin( 5 EOF
+    auto v = make_vector({
+        {StandardToken::IDENTIFIER, 0, "sin"},
+        {StandardToken::LPAREN, 0, "("},
+        {StandardToken::NUMBER, 5, "5"}
+    });
+    Parser parser;
+    EXPECT_THROW(parser.parse(v), std::runtime_error);
 }
 
 TEST_F(ParserExceptionTest, ThrowsOnUnexpectedTokenAtStartOfExpression) {
-    // 1. Вектор: MUL, NUMBER("5"), EOF. (Вираз не може починатися з *)
-    // 2. EXPECT_THROW(..., std::runtime_error).
+    // * 5
+    auto v = make_vector({
+        {StandardToken::MUL, 0, "*"},
+        {StandardToken::NUMBER, 5, "5"}
+    });
+    Parser parser;
+    EXPECT_THROW(parser.parse(v), std::runtime_error);
 }
 
 TEST_F(ParserExceptionTest, ThrowsOnTrailingTokensAfterValidExpression) {
-    // 1. Вектор: NUMBER("2"), ADD, NUMBER("2"), NUMBER("3"), EOF.
-    // 2. Парсер успішно з'їсть "2 + 2", а потім побачить "3", коли очікує EOF.
-    // 3. EXPECT_THROW(..., std::runtime_error).
+    // 2 + 2 3
+    auto v = make_vector({
+        {StandardToken::NUMBER, 2, "2"},
+        {StandardToken::ADD, 0, "+"},
+        {StandardToken::NUMBER, 2, "2"},
+        {StandardToken::NUMBER, 3, "3"} // Зайвий токен!
+    });
+    Parser parser;
+    EXPECT_THROW(parser.parse(v), std::runtime_error);
 }
-
-```
-*/
-
-
-
