@@ -86,11 +86,8 @@ namespace Hermes {
         }
 
         Token bad_token = _peek();
-        throw std::runtime_error(
-            "Syntax error: Unexpected token '" + std::string(bad_token.lexeme) + 
-            "' at [Row: " + std::to_string(bad_token.row) + 
-            ", Col: " + std::to_string(bad_token.column) + "]."
-        );
+        throw SyntaxError("Unexpected token '" + std::string(bad_token.lexeme) + "'", 
+                  bad_token.row, bad_token.column);
     }
 
 }   //  namespace   Hermes

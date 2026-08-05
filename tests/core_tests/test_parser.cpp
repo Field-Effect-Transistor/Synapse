@@ -48,7 +48,7 @@ using ParserExceptionTest = ParserTest;
 TEST_F(ParserPrimitiveTest, ParserThrowsForEmptyTokens) {
     Vector<Token> v = make_vector({});
     Parser parser;
-    EXPECT_THROW(parser.parse(v), std::runtime_error);
+    EXPECT_THROW(parser.parse(v), SyntaxError);
 }
 
 TEST_F(ParserPrimitiveTest, ParseParsesSingleNumberIntoLiteralNode) {
@@ -373,7 +373,7 @@ TEST_F(ParserExceptionTest, ThrowsOnMissingClosingParenthesisInExpression) {
         {StandardToken::NUMBER, 5, "5"}
     });
     Parser parser;
-    EXPECT_THROW(parser.parse(v), std::runtime_error);
+    EXPECT_THROW(parser.parse(v), SyntaxError);
 }
 
 TEST_F(ParserExceptionTest, ThrowsOnMissingClosingParenthesisInFunctionCall) {
@@ -384,7 +384,7 @@ TEST_F(ParserExceptionTest, ThrowsOnMissingClosingParenthesisInFunctionCall) {
         {StandardToken::NUMBER, 5, "5"}
     });
     Parser parser;
-    EXPECT_THROW(parser.parse(v), std::runtime_error);
+    EXPECT_THROW(parser.parse(v), SyntaxError);
 }
 
 TEST_F(ParserExceptionTest, ThrowsOnUnexpectedTokenAtStartOfExpression) {
@@ -394,7 +394,7 @@ TEST_F(ParserExceptionTest, ThrowsOnUnexpectedTokenAtStartOfExpression) {
         {StandardToken::NUMBER, 5, "5"}
     });
     Parser parser;
-    EXPECT_THROW(parser.parse(v), std::runtime_error);
+    EXPECT_THROW(parser.parse(v), SyntaxError);
 }
 
 TEST_F(ParserExceptionTest, ThrowsOnTrailingTokensAfterValidExpression) {
@@ -406,5 +406,5 @@ TEST_F(ParserExceptionTest, ThrowsOnTrailingTokensAfterValidExpression) {
         {StandardToken::NUMBER, 3, "3"} // Зайвий токен!
     });
     Parser parser;
-    EXPECT_THROW(parser.parse(v), std::runtime_error);
+    EXPECT_THROW(parser.parse(v), SyntaxError);
 }

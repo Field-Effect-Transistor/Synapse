@@ -35,7 +35,8 @@ namespace Hermes {
             if (_peek().type == type) {
                 return _advance();
             }
-            throw std::runtime_error(error_message);
+            Token bad_token = _peek();
+            throw SyntaxError(error_message, bad_token.row, bad_token.column);
         }
 
         const Token& _advance() {
@@ -75,18 +76,15 @@ namespace Hermes {
             _current = 0;
             
             if (_isAtEnd()) {
-                throw std::runtime_error("Syntax Error: empty equation!");
+                throw SyntaxError("empty equation!"); 
             }
 
             ASTNodePtr root = _parseExpression();
 
             if (!_isAtEnd()) {
                 Token bad_token = _peek();
-                throw std::runtime_error(
-                    "Syntax error: Unexpected token '" + std::string(bad_token.lexeme) + 
-                    "' after expression at [Row: " + std::to_string(bad_token.row) + 
-                    ", Col: " + std::to_string(bad_token.column) + "]."
-                );
+                throw SyntaxError("Unexpected token '" + std::string(bad_token.lexeme) + "' after expression", 
+                                  bad_token.row, bad_token.column);
             }
 
             return root;

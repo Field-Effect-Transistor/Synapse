@@ -2,7 +2,7 @@
 #pragma once
 
 #include <cstdint>
-#include <stdexcept>
+#include "Exceptions.hpp"
 
 namespace Hermes {
 
@@ -106,21 +106,21 @@ namespace Hermes {
             if(isNumber()) {
                 return _data.as_number;
             }
-            throw std::runtime_error("Not a number!!!");
+            throw TypeError("Expected a number, but got another type.");
         }
 
         bool getBool() const {
             if(isBoolean()) {
                 return _data.as_bool;
             }
-            throw std::runtime_error("Not a boolean!!!");
+            throw TypeError("Expected a boolean, but got another type.");
         }
 
         ICustomValue* getCustom() const {
             if(isCustom()) {
                 return _data.as_custom;
             }
-            throw std::runtime_error("Not a custom object!!!");
+            throw TypeError("Expected a custom object, but got another type.");
         }
 
         std::string to_str() const {
