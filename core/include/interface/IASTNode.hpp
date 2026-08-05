@@ -33,32 +33,4 @@ namespace Hermes {
     };  //  struct ASTNodeDeleter
 
     using ASTNodePtr = UniquePtr<IASTNode, ASTNodeDeleter>;
-
-    template<typename DERIVED>
-    struct ASTNodeBase : public IASTNode {
-        inline static const char type{0};
-
-        virtual bool compare(const DERIVED&) const = 0;
-
-        const void* get_type_id() const override {
-            return static_cast<const void*>(&type);
-        }
-
-        bool is_equal(const IASTNode& other) const override {
-            if (this->get_type_id() != other.get_type_id()) {
-                return false;
-            }
-            const auto& other_derrived = static_cast<const DERIVED&>(other);
-            return static_cast<const DERIVED*>(this)->compare(other_derrived);
-        }
-
-        void destroy() override {
-            delete static_cast<DERIVED*>(this);
-        }
-
-        Value accept(IVisitor& v) override {
-            return v.visit(static_cast<DERIVED&>(*this));
-        }
-    };  //  struct  ASTNodeBase
-
 };  //  namespace   Hermes
