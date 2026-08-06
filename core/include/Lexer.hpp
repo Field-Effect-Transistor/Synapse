@@ -6,7 +6,7 @@
 #include <string>
 #include "Vector.hpp"
 
-namespace Hermes {
+namespace Synapse {
 
     class Lexer : public ILexer {
         std::istream&   _is;
@@ -69,4 +69,4 @@ namespace Hermes {
 
     };  //  class   Lexer
 
-}   //  namespace   Hermes
+}   //  namespace   Synapse

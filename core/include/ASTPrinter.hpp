@@ -4,7 +4,7 @@
 #include "interface/IVisitor.hpp"
 #include "ASTNode.hpp"
 
-namespace Hermes {
+namespace Synapse {
 
     class ASTPrinter : public IVisitor {
         std::string _output;
@@ -66,4 +66,4 @@ namespace Hermes {
 
     };  //  class   ASTPrinter
 
-}   //  namespace   Hermes
+}   //  namespace   Synapse

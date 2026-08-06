@@ -6,7 +6,7 @@
 #include <iomanip>
 #include <iostream>
 
-namespace Hermes {
+namespace Synapse {
     
     using TokenType = uint16_t;
 
@@ -103,4 +103,4 @@ namespace Hermes {
             return !(*this == other);
         }
     };  //  struct  Token
-};  //  namespace   Hermes
+};  //  namespace   Synapse

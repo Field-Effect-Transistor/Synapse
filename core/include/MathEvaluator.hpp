@@ -8,7 +8,7 @@
 #include <string>
 #include <cmath>
 
-namespace Hermes {
+namespace Synapse {
     
     class MathEvaluator : public IVisitor {
     public:
@@ -93,4 +93,4 @@ namespace Hermes {
         }
     };  //  class   MathEvaluator
 
-}   //  namespace   Hermes
+}   //  namespace   Synapse

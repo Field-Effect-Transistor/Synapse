@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace Hermes {
+namespace Synapse {
     //size_t* (*func)(char* chunk, size_t chunk_size) = nullptr;
 
     struct ILexer {
@@ -17,4 +17,4 @@ namespace Hermes {
         virtual const Token& peekToken() = 0;
         virtual bool isEOF() = 0;
     };  //  struct  ILexer
-}   //  namespace   Hermes
+}   //  namespace   Synapse

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "Value.hpp"
 
-using namespace Hermes;
+using namespace Synapse;
 
 // --- MOCK КЛАС ДЛЯ ТЕСТУВАННЯ ПАМ'ЯТІ ---
 // Він рахує, скільки разів його створили, клонували та знищили.

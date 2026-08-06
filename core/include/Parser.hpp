@@ -6,7 +6,7 @@
 #include "UniquePtr.hpp"
 #include "stdexcept"
 
-namespace Hermes {
+namespace Synapse {
     class Parser : public IParser {
         const Vector<Token>* _tokens = nullptr;
         size_t  _current = 0;
@@ -91,4 +91,4 @@ namespace Hermes {
         }
 
     };  //  class   Parser
-}   //  namespace   Hermes
+}   //  namespace   Synapse

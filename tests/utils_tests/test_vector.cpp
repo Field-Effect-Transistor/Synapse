@@ -4,7 +4,7 @@
 
 #include <cstdint>
 
-using namespace Hermes;
+using namespace Synapse;
 
 //  ============
 //      Mock

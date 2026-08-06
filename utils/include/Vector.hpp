@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <initializer_list>
 
-namespace Hermes {
+namespace Synapse {
 
     template<typename T>
     class Vector {
@@ -229,7 +229,7 @@ namespace Hermes {
     template<typename T>
     T& Vector<T>::at(size_t index) {
         if (index >= _size) {
-            throw std::out_of_range("Hermes::Vector::at(): out of vector range");
+            throw std::out_of_range("Synapse::Vector::at(): out of vector range");
         }
         return _data[index];
     }
@@ -237,7 +237,7 @@ namespace Hermes {
     template<typename T>
     const T& Vector<T>::at(size_t index) const {
         if (index >= _size) {
-            throw std::out_of_range("Hermes::Vector::at() const: out of vector range");
+            throw std::out_of_range("Synapse::Vector::at() const: out of vector range");
         }
         return _data[index];
     }
@@ -346,4 +346,4 @@ namespace Hermes {
         }
     }
 
-}   //  namespace   Hermes
+}   //  namespace   Synapse

@@ -4,7 +4,7 @@
 #include <cstdint>
 #include "Exceptions.hpp"
 
-namespace Hermes {
+namespace Synapse {
 
     struct ICustomValue {
         virtual ~ICustomValue() = default;
@@ -141,4 +141,4 @@ namespace Hermes {
 
     };  //  class   Value
 
-}   //  namespace   Hermes
+}   //  namespace   Synapse

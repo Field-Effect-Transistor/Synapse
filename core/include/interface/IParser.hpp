@@ -6,10 +6,10 @@
 
 #include "Vector.hpp"
 
-namespace Hermes {
+namespace Synapse {
     struct IParser {
         virtual ~IParser() = default;
         virtual ASTNodePtr parse(const Vector<Token>&) = 0;
     };
     
-}   //  namespace   Hermes
+}   //  namespace   Synapse

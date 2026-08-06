@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include "ArenaAllocator.hpp"
 
-using namespace Hermes;
+using namespace Synapse;
 
 TEST(ArenaAllocatorTest, BasicAllocation) {
     ArenaAllocator arena(1024);

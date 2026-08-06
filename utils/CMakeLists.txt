@@ -1,4 +1,4 @@
 #   /utils/CMakeLists.txt
-add_library(HermesUtils INTERFACE)
+add_library(SynapseUtils INTERFACE)
 
-target_include_directories(HermesUtils INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(SynapseUtils INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)

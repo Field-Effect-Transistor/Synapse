@@ -8,7 +8,7 @@
 #include "utils/include/UniquePtr.hpp"
 #include "Vector.hpp"
 
-namespace Hermes {
+namespace Synapse {
 
     template<typename DERIVED>
     struct ASTNodeBase : public IASTNode {
@@ -125,5 +125,5 @@ namespace Hermes {
         }
     };  //  FunctionNode
 
-}   //  namespace   Hermes
+}   //  namespace   Synapse
 

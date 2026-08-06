@@ -1,12 +1,12 @@
 # /tests/utils_tests/CMakeLists.txt
 
-add_executable(HermesUtilsTests test_unique_ptr.cpp test_arena_allocator.cpp test_vector.cpp)
+add_executable(SynapseUtilsTests test_unique_ptr.cpp test_arena_allocator.cpp test_vector.cpp)
 
-target_link_libraries(HermesUtilsTests
+target_link_libraries(SynapseUtilsTests
     PRIVATE
-    HermesUtils
+    SynapseUtils
     GTest::gtest_main
 )
 
 include(GoogleTest)
-gtest_discover_tests(HermesUtilsTests)
+gtest_discover_tests(SynapseUtilsTests)

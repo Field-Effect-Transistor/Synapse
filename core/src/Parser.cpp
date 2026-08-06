@@ -2,7 +2,7 @@
 #include "Parser.hpp"
 #include "ASTNode.hpp"
 
-namespace Hermes {
+namespace Synapse {
 
     ASTNodePtr  Parser::_parseExpression() {
         ASTNodePtr left = _parseTerm();
@@ -90,4 +90,4 @@ namespace Hermes {
                   bad_token.row, bad_token.column);
     }
 
-}   //  namespace   Hermes
+}   //  namespace   Synapse

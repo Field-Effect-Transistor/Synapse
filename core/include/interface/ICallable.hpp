@@ -7,7 +7,7 @@
 
 #include "Exceptions.hpp"
 
-namespace Hermes {
+namespace Synapse {
     struct ICallable {
         static constexpr size_t VARITY = static_cast<size_t>(-1);
 
@@ -29,4 +29,4 @@ namespace Hermes {
     };  //  struct  CallableDeleer
 
     using CallablePtr = UniquePtr<ICallable, CallableDeleter>;
-}   //  namespace   Hermes
+}   //  namespace   Synapse

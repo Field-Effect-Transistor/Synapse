@@ -8,7 +8,7 @@
 #include "ASTPrinter.hpp"
 #include "MathEvaluator.hpp"
 
-using namespace Hermes;
+using namespace Synapse;
 
 void runParserTest(const std::string& testName, const std::string& code) {
     std::cout << "========== ТЕСТ: " << testName << " ==========\n";

@@ -1,6 +1,6 @@
 # /tests/core_tests/CMakeLists.txt
 
-add_executable(HermesCoreTests
+add_executable(SynapseCoreTests
     test_lexer.cpp
     test_value.cpp    
     test_ast.cpp
@@ -9,11 +9,11 @@ add_executable(HermesCoreTests
     test_callable.cpp
 )
 
-target_link_libraries(HermesCoreTests
+target_link_libraries(SynapseCoreTests
     PRIVATE
-    HermesCore
+    SynapseCore
     GTest::gtest_main
 )
 
 include(GoogleTest)
-gtest_discover_tests(HermesCoreTests)
+gtest_discover_tests(SynapseCoreTests)

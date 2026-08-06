@@ -4,7 +4,7 @@
 #include "core/include/Value.hpp"
 #include "UniquePtr.hpp"
 
-namespace Hermes {
+namespace Synapse {
     struct IVisitor;
 
     struct IASTNode {
@@ -33,4 +33,4 @@ namespace Hermes {
     };  //  struct ASTNodeDeleter
 
     using ASTNodePtr = UniquePtr<IASTNode, ASTNodeDeleter>;
-};  //  namespace   Hermes
+};  //  namespace   Synapse

@@ -3,7 +3,7 @@
 #include "ASTTreePrinter.hpp"
 #include "ASTNode.hpp"
 
-using namespace Hermes;
+using namespace Synapse;
 
 TEST(ASTStructPrinterTest, PrintsTreeStructureCorrectly) {
     ASTNodePtr  _5(new LiteralNode(Token(StandardToken::NUMBER, 5.0, "5", 0, 0))),

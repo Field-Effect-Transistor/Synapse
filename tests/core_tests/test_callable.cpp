@@ -3,7 +3,7 @@
 #include "Callable.hpp"
 #include "Exceptions.hpp"
 
-using namespace Hermes;
+using namespace Synapse;
 
 // =================
 //      MOCKS

@@ -16,7 +16,7 @@ int stricmp(char const *a, char const *b) {
     return 0;
 }
 
-namespace Hermes {
+namespace Synapse {
     Token Lexer::fetchNextToken() {
         Token token;
 

@@ -58,7 +58,7 @@ if(LCOV_PATH AND GENHTML_PATH)
         COMMAND ${CMAKE_COMMAND} -E echo "✅ Звіт згенеровано: ${CMAKE_BINARY_DIR}/coverage_report/index.html"
 
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        DEPENDS HermesCoreTests HermesUtilsTests
+        DEPENDS SynapseCoreTests SynapseUtilsTests
         COMMENT "Запуск тестів та генерація HTML-звіту покриття..."
     )
 else()

@@ -2,7 +2,7 @@
 #include "ASTNode.hpp"
 #include "ASTPrinter.hpp"
 
-using namespace Hermes;
+using namespace Synapse;
 
 TEST(ASTTest, TestViaPrinter) {
     ASTNodePtr  _5(new LiteralNode(Token(StandardToken::NUMBER, 5.0, "5", 0, 0))),

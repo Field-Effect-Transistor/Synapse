@@ -3,7 +3,7 @@
 #include "interface/ICallable.hpp"
 #include <type_traits>
 
-namespace Hermes {
+namespace Synapse {
 
     template<typename CallableType>
     class Functional : public ICallable {
@@ -46,4 +46,4 @@ namespace Hermes {
         return CallablePtr(raw_ptr);
     }
 
-}   // namespace Hermes
+}   // namespace Synapse

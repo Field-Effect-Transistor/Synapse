@@ -4,7 +4,7 @@
 #include <iostream>
 #include "Lexer.hpp"
 
-using namespace Hermes;
+using namespace Synapse;
 
 TEST(LexerTest, BasicServiceTokens) {
     // Рядок 0: коментар

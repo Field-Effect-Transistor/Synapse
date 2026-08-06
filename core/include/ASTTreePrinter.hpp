@@ -5,7 +5,7 @@
 #include "ASTNode.hpp"
 #include <string>
 
-namespace Hermes {
+namespace Synapse {
 
     class ASTTreePrinter : public IVisitor {
         std::string _output;
@@ -90,4 +90,4 @@ namespace Hermes {
 
     };  //  class   ASTTreePrinter
 
-}   //  namespace   Hermes
+}   //  namespace   Synapse

@@ -2,7 +2,7 @@
 #include "UniquePtr.hpp"
 #include <utility>
 
-using namespace Hermes;
+using namespace Synapse;
 
 struct LifetimeTracker {
     bool* is_destroyed;

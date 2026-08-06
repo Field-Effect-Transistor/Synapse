@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace Hermes {
+namespace Synapse {
 
     class HermesException : public std::runtime_error {
     public:

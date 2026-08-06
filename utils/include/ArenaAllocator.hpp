@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <new>
 
-namespace Hermes {
+namespace Synapse {
     class ArenaAllocator {
         uint8_t*    _arena = nullptr;
         size_t      _capacity = 0;
@@ -81,4 +81,4 @@ namespace Hermes {
         }
 
     };  //  class   ArenaAllocator
-}   //  namespace   Hermes
+}   //  namespace   Synapse

@@ -3,7 +3,7 @@
 
 #include <cstddef>
 
-namespace Hermes {
+namespace Synapse {
 
     template<typename T>
     struct StandardDeleter {
@@ -77,4 +77,4 @@ namespace Hermes {
 
     };  //  class   UniquePtr
 
-}   //  namespace   Hermes
+}   //  namespace   Synapse

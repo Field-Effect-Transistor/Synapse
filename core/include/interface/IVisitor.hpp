@@ -3,7 +3,7 @@
 
 #include "core/include/Value.hpp"
 
-namespace Hermes {
+namespace Synapse {
     
     struct LiteralNode;
     struct VariableNode;
@@ -18,4 +18,4 @@ namespace Hermes {
         virtual Value visit(UnaryNode& node) = 0;
         virtual Value visit(FunctionNode& node) = 0;
     };  //  struct  IVisitor;
-}   //  namespace   Hermes
+}   //  namespace   Synapse

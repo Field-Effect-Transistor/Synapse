@@ -3,7 +3,7 @@
 #include "Parser.hpp"
 #include "ASTPrinter.hpp"
 
-using namespace Hermes;
+using namespace Synapse;
 
 class ParserTest : public testing::Test {
 protected:
