@@ -32,7 +32,7 @@ if(LCOV_PATH AND GENHTML_PATH)
 
         # Збір покриття
         COMMAND ${LCOV_PATH} --capture 
-                --directory ${CMAKE_BINARY_DIR} 
+                --directory .
                 --output-file coverage.info 
                 --ignore-errors inconsistent 
                 --rc branch_coverage=1

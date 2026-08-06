@@ -29,7 +29,7 @@ void runParserTest(const std::string& testName, const std::string& code) {
         }
 
         // 2. Синтаксичний аналіз
-        Parser parser(tokens);
+        Parser parser;
         ASTNodePtr root = parser.parse(tokens);
 
         if (!root) {
