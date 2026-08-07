@@ -7,6 +7,7 @@ add_executable(SynapseCoreTests
     test_ast_tree_printer.cpp
     test_parser.cpp
     test_callable.cpp
+    test_context.cpp
 )
 
 target_link_libraries(SynapseCoreTests
