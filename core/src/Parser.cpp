@@ -1,8 +1,18 @@
 //  /core/src/Parser.cpp
 #include "Parser.hpp"
-#include "ASTNode.hpp"
 
-namespace Synapse {
+#include "ASTNode.hpp"
+#include "Exceptions.hpp"
+
+namespace Synapse::Internal {
+
+    const Token& Parser::_consume(TokenType type, const std::string& error_message) {
+        if (_peek().type == type) {
+            return _advance();
+        }
+        Token bad_token = _peek();
+        throw SyntaxError(error_message, bad_token.row, bad_token.column);
+    }
 
     ASTNodePtr  Parser::_parseExpression() {
         ASTNodePtr left = _parseTerm();
@@ -90,4 +100,23 @@ namespace Synapse {
                   bad_token.row, bad_token.column);
     }
 
-}   //  namespace   Synapse
+    ASTNodePtr Parser::parse(const Vector<Token>& tokens) {
+        _tokens = &tokens;
+        _current = 0;
+        
+        if (_isAtEnd()) {
+            throw SyntaxError("empty equation!"); 
+        }
+
+        ASTNodePtr root = _parseExpression();
+
+        if (!_isAtEnd()) {
+            Token bad_token = _peek();
+            throw SyntaxError("Unexpected token '" + std::string(bad_token.lexeme) + "' after expression", 
+                                bad_token.row, bad_token.column);
+        }
+
+        return root;
+    }
+
+}   //  namespace   Synapse::Internal

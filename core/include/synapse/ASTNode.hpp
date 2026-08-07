@@ -1,11 +1,11 @@
-//  /core/include/interface/ASTNode.hpp
+//  /core/include/synapse/ASTNode.hpp
 #pragma once
 
 #include "interface/IVisitor.hpp"
 #include "interface/IASTNode.hpp"
 #include "Token.hpp"
 
-#include "utils/include/UniquePtr.hpp"
+#include "UniquePtr.hpp"
 #include "Vector.hpp"
 
 namespace Synapse {
@@ -37,7 +37,7 @@ namespace Synapse {
         }
     };  //  struct  ASTNodeBase
 
-    struct LiteralNode : ASTNodeBase<LiteralNode> {
+    struct LiteralNode final : ASTNodeBase<LiteralNode> {
         Token   _token;
 
         LiteralNode(Token token) : _token(std::move(token)) {};
@@ -48,7 +48,7 @@ namespace Synapse {
         }
     };  //  struct  LiteralNode
 
-    struct VariableNode : ASTNodeBase<VariableNode> {
+    struct VariableNode final : ASTNodeBase<VariableNode> {
         Token   _token;
 
         VariableNode(Token token) : _token(std::move(token)) {};
@@ -59,7 +59,7 @@ namespace Synapse {
         }
     };  //  struct  VariableNode
 
-    struct UnaryNode : ASTNodeBase<UnaryNode> {
+    struct UnaryNode final : ASTNodeBase<UnaryNode> {
         Token       _token;
         ASTNodePtr  _child;
         
@@ -75,7 +75,7 @@ namespace Synapse {
         }
     };  //  struct  ASTUnanyNode
 
-    struct BinaryNode : ASTNodeBase<BinaryNode> {
+    struct BinaryNode final : ASTNodeBase<BinaryNode> {
         Token       _token;
         ASTNodePtr  _left;
         ASTNodePtr  _right;
@@ -102,7 +102,7 @@ namespace Synapse {
         }
     };  //  struct  BinaryNode
 
-    struct FunctionNode : ASTNodeBase<FunctionNode> {
+    struct FunctionNode final : ASTNodeBase<FunctionNode> {
         Token              _token;
         Vector<ASTNodePtr> _args;
 
@@ -123,7 +123,6 @@ namespace Synapse {
             }
             return true;
         }
-    };  //  FunctionNode
+    };  //  struct  FunctionNode
 
 }   //  namespace   Synapse
-

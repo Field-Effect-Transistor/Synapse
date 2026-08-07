@@ -1,7 +1,7 @@
-//  /core/include/interface/IVisitor.hpp
+//  /core/include/synapse/interface/IVisitor.hpp
 #pragma once
 
-#include "core/include/Value.hpp"
+#include "Value.hpp"
 
 namespace Synapse {
     

@@ -4,7 +4,8 @@
 #include <iostream>
 #include "Lexer.hpp"
 
-using namespace Synapse;
+using namespace Synapse;    
+using namespace Synapse::Internal;
 
 TEST(LexerTest, BasicServiceTokens) {
     // Рядок 0: коментар

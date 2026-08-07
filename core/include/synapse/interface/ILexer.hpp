@@ -1,4 +1,4 @@
-//  /core/include/ILexer.hpp
+//  /core/include/synapse/interface/ILexer.hpp
 #pragma once
 
 #include "Token.hpp"

@@ -1,4 +1,4 @@
-//  /core/include/Callable.hpp
+//  /core/include/synapse/Callable.hpp
 #pragma once
 #include "interface/ICallable.hpp"
 #include <type_traits>

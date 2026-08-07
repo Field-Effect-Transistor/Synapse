@@ -1,10 +1,8 @@
-//  /core/include/Token.hpp
+//  /core/include/synapse/Token.hpp
 #pragma once
 
 #include <cstdint>
 #include <string>
-#include <iomanip>
-#include <iostream>
 
 namespace Synapse {
     
@@ -79,19 +77,7 @@ namespace Synapse {
             uint16_t    r
         ): type(t), value(v), lexeme(std::move(l)), column(c), row(r) {}
 
-        void print(std::ostream& os) const {
-            std::string positionInfo = "[R:" + std::to_string(row) + " C:" + std::to_string(column) + "]";
-            std::string lexemeInfo = "('" + lexeme + "')";
-
-            os << std::left 
-               << std::setw(14) << positionInfo
-               << std::setw(16) << StandardToken::toString(type)
-               << std::setw(25) << lexemeInfo;
-            
-            if (type == StandardToken::NUMBER) {
-                os << " Val: " << value;
-            }
-        }
+        void print(std::ostream& os) const;
 
         bool operator==(const Token& other) const {
             return  this->type == other.type &&

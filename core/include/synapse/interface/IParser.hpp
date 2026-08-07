@@ -1,4 +1,4 @@
-//  /core/include/interface.hpp
+//  /core/include/synapse/interface/IParser.hpp
 #pragma once
 
 #include "IASTNode.hpp"

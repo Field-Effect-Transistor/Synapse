@@ -6,14 +6,13 @@
 #include <string>
 #include "Vector.hpp"
 
-namespace Synapse {
+namespace Synapse::Internal {
 
-    class Lexer : public ILexer {
+    class Lexer final : public ILexer {
         std::istream&   _is;
 
         Token _token;
         bool  _is_token = false;
-//        LexerBrainFunc  _brain = nullptr;
 
         size_t _chunk_size;
         Vector<char>    _chunk;
@@ -56,10 +55,7 @@ namespace Synapse {
         Lexer& operator=(const Lexer&) = delete;
 
         Lexer(std::istream& is, size_t chunk_size = 1024) : _is(is), _chunk_size(chunk_size), _chunk(_chunk_size) {}
-//        Lexer(std::istream& is, LexerBrainFunc b) : _is(is) { loadRule(b); }
         ~Lexer() = default;
-
-//        void loadRule(LexerBrainFunc b) override { _brain = b; }
 
         Token fetchNextToken();
 
@@ -69,4 +65,4 @@ namespace Synapse {
 
     };  //  class   Lexer
 
-}   //  namespace   Synapse
+}   //  namespace   Synapse::Internal

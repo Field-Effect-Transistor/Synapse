@@ -16,7 +16,7 @@ int stricmp(char const *a, char const *b) {
     return 0;
 }
 
-namespace Synapse {
+namespace Synapse::Internal {
     Token Lexer::fetchNextToken() {
         Token token;
 
@@ -232,4 +232,4 @@ namespace Synapse {
         return peekToken().type == StandardToken::END_OF_FILE;
     }
 
-}
+}   //  namespace   Synapse::Internal

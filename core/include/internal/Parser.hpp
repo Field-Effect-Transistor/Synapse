@@ -4,10 +4,9 @@
 #include "interface/IParser.hpp"
 
 #include "UniquePtr.hpp"
-#include "stdexcept"
 
-namespace Synapse {
-    class Parser : public IParser {
+namespace Synapse::Internal {
+    class Parser final : public IParser {
         const Vector<Token>* _tokens = nullptr;
         size_t  _current = 0;
 
@@ -20,7 +19,6 @@ namespace Synapse {
         Parser(Parser&&) = delete;
         Parser& operator=(Parser&&) = delete;
 
-//      Parser(Vector<Token>& tokens) : _tokens(&tokens) {}
         ~Parser() = default;
 
     private:
@@ -31,13 +29,7 @@ namespace Synapse {
 
         const Token& _previous() const { return _tokens->operator[](_current == 0 ? 0 : _current - 1); }
         
-        const Token& _consume(TokenType type, const std::string& error_message) {
-            if (_peek().type == type) {
-                return _advance();
-            }
-            Token bad_token = _peek();
-            throw SyntaxError(error_message, bad_token.row, bad_token.column);
-        }
+        const Token& _consume(TokenType type, const std::string& error_message);
 
         const Token& _advance() {
             if (!_isAtEnd()) {
@@ -71,24 +63,7 @@ namespace Synapse {
         ASTNodePtr  _parsePrim();
 
     public:
-        ASTNodePtr parse(const Vector<Token>& tokens) override {
-            _tokens = &tokens;
-            _current = 0;
-            
-            if (_isAtEnd()) {
-                throw SyntaxError("empty equation!"); 
-            }
-
-            ASTNodePtr root = _parseExpression();
-
-            if (!_isAtEnd()) {
-                Token bad_token = _peek();
-                throw SyntaxError("Unexpected token '" + std::string(bad_token.lexeme) + "' after expression", 
-                                  bad_token.row, bad_token.column);
-            }
-
-            return root;
-        }
+        ASTNodePtr parse(const Vector<Token>& tokens) override;
 
     };  //  class   Parser
-}   //  namespace   Synapse
+}   //  namespace   Synapse::Internal

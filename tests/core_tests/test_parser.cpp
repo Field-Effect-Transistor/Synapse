@@ -2,8 +2,10 @@
 #include <gtest/gtest.h>
 #include "Parser.hpp"
 #include "ASTPrinter.hpp"
+#include "Exceptions.hpp"
 
 using namespace Synapse;
+using namespace Synapse::Internal;
 
 class ParserTest : public testing::Test {
 protected:

@@ -1,4 +1,4 @@
-//  /core/include/Exceptions.hpp
+//  /core/include/synapse/Exceptions.hpp
 #pragma once
 #include <stdexcept>
 #include <string>

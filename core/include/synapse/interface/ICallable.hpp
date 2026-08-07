@@ -1,4 +1,4 @@
-//  /core/include/interface/ICallable.hpp
+//  /core/include/synapse/interface/ICallable.hpp
 #pragma once
 
 #include "Value.hpp"

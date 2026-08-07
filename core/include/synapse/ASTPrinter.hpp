@@ -1,4 +1,4 @@
-//  /core/include/ASTPrinter.hpp
+//  /core/include/synapse/ASTPrinter.hpp
 #pragma once
 
 #include "interface/IVisitor.hpp"
