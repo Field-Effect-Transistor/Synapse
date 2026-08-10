@@ -2,6 +2,7 @@
 #include "internal/MathEvaluator.hpp"
 
 #include "synapse/Exceptions.hpp"
+#include "synapse/Context.hpp"
 
 #include <string>
 #include <cmath>
@@ -9,8 +10,9 @@
 namespace Synapse::Internal {
 
     Value MathEvaluator::visit(VariableNode& node) {
-        //  відкладаю на далеке майбутнє)
-        throw RuntimeError("Variables are not supported yet: '" + node._token.lexeme + "'");
+        if (!_context) throw RuntimeError("Evaluation Context is null!");
+        
+        return _context->getVariable(node._token.lexeme.c_str());
     }
 
     Value MathEvaluator::visit(LiteralNode& node) {
@@ -85,7 +87,18 @@ namespace Synapse::Internal {
     }
 
     Value MathEvaluator::visit(FunctionNode& node) {
-        throw RuntimeError("Functions are not supported yet: '" + node._token.lexeme + "'");
+        if (!_context) throw RuntimeError("Evaluation Context is null!");
+
+        ICallable* func = _context->getFunction(node._token.lexeme.c_str());
+
+        Vector<Value> evaluated_args;
+        evaluated_args.reserve(node._args.size());
+
+        for (const auto& arg_node : node._args) {
+            evaluated_args.push_back(arg_node->accept(*this));
+        }
+
+        return (*func)(evaluated_args);
     }
 
 }   //  namespace   Synapse

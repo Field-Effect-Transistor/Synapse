@@ -4,10 +4,31 @@
 #include "synapse/interface/IVisitor.hpp"
 #include "synapse/ASTNode.hpp"
 
+namespace Synapse {
+    class Context;
+}   //  namespace   Synapse
+
 namespace Synapse::Internal {
 
     class MathEvaluator final : public IVisitor {
+        Context* _context = nullptr;
     public:
+        MathEvaluator(Context* ctx) : _context(ctx) {}
+        ~MathEvaluator() = default;
+
+        MathEvaluator(const MathEvaluator&) = delete;
+        MathEvaluator& operator=(const MathEvaluator&) = delete;
+
+        MathEvaluator(MathEvaluator&& meval) {
+            this->_context = meval._context;
+            meval._context = nullptr;
+        }
+        MathEvaluator& operator=(MathEvaluator&& meval) {
+            this->_context = meval._context;
+            meval._context = nullptr;
+            return *this;
+        }
+
         Value visit(VariableNode& node) override;
         Value visit(LiteralNode& node) override;
         Value visit(UnaryNode& node) override;

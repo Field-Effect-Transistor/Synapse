@@ -9,6 +9,7 @@ add_executable(SynapseCoreTests
     test_callable.cpp
     test_context.cpp
     test_context_manager.cpp
+    test_math_evaluator.cpp
 )
 
 target_link_libraries(SynapseCoreTests
