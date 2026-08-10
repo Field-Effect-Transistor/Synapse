@@ -4,17 +4,9 @@
 #include <unordered_map>
 
 namespace Synapse {
-    
-    struct Symbol {
-        Value data;
-        bool is_const;
-        
-        Symbol(Value d = Value(), bool c = false) 
-            : data(std::move(d)), is_const(c) {}
-    };
 
     struct Context::Impl {
-        std::unordered_map<std::string, Symbol>         _symbols;
+        std::unordered_map<std::string, Value>          _symbols;
         std::unordered_map<std::string, CallablePtr>    _functions;
     };  //  struct  Context::Impl
 
@@ -30,7 +22,7 @@ namespace Synapse {
         if(_impl->_symbols.count(key)) {
             throw std::runtime_error("Variable '" + key + "' is already defined in this scope!");
         }
-        _impl->_symbols[key] = Symbol(std::move(val), is_const);
+        _impl->_symbols[key] = std::move(val.set_is_const(is_const));
     }
 
     void Context::assignVariable(const char* name, Value val) {
@@ -39,10 +31,10 @@ namespace Synapse {
         if(auto it = _impl->_symbols.find(key); it == _impl->_symbols.end()) {
             throw std::runtime_error("Variable '" + key + "' is not defined in this scope!");
         } else {
-            if(it->second.is_const) {
+            if(it->second.is_constant()) {
                 throw std::runtime_error("Variable '" + key + "' is const in this scope!");
             }
-            it->second.data = std::move(val);
+            it->second = std::move(val);
         }
     }
 
@@ -54,7 +46,7 @@ namespace Synapse {
             auto it = curr->_impl->_symbols.find(key);
             
             if (it != curr->_impl->_symbols.end()) {
-                return it->second.data;
+                return it->second;
             }
             
             curr = curr->_parent;

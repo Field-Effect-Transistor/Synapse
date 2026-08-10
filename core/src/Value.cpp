@@ -8,9 +8,11 @@ namespace Synapse {
     Value::Value(Value&& other) {
         _type = other._type;
         _data = other._data;
+        _is_const = other._is_const;
         
         other._type = Type::NUMBER; 
         other._data.as_number = 0;
+        other._is_const = false;
     }
 
     Value& Value::operator=(Value&& other) {
@@ -22,15 +24,18 @@ namespace Synapse {
 
         _type = other._type;
         _data = other._data;
+        _is_const = other._is_const;
         
         other._type = Type::NUMBER; 
         other._data.as_number = 0;
+        other._is_const = false;
 
         return *this;
     }
 
     Value::Value(const Value& other) {
         _type = other._type;
+        _is_const = other._is_const;
         if (other.isCustom()) {
             _data.as_custom = other._data.as_custom->clone();
         } else {
@@ -48,6 +53,7 @@ namespace Synapse {
         }
 
         _type = other._type;
+        _is_const = other._is_const;
         if (other.isCustom()) {
             _data.as_custom = other._data.as_custom->clone();
         } else {
@@ -95,4 +101,3 @@ namespace Synapse {
     }
 
 }   //  namespace   Synapse
-

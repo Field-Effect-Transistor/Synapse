@@ -18,19 +18,20 @@ namespace Synapse {
         };
 
     private:
-        Type    _type;
-
         union {
             double          as_number;
             bool            as_bool;
             ICustomValue*   as_custom;
         }       _data;
 
+        Type    _type;
+        bool    _is_const;
+        
     public:
-        Value() : _type(Type::NUMBER) { _data.as_number = .0; }
-        Value(double n) : _type(Type::NUMBER) {_data.as_number = n; }
-        Value(bool b) : _type(Type::BOOLEAN) { _data.as_bool = b; }
-        Value(ICustomValue* c) : _type(Type::CUSTOM_OBJECT) { _data.as_custom = c; }
+        Value() : _type(Type::NUMBER), _is_const(false) { _data.as_number = .0; }
+        Value(double n, bool is_const = false) : _type(Type::NUMBER), _is_const(is_const) {_data.as_number = n; }
+        Value(bool b, bool is_const = false) : _type(Type::BOOLEAN), _is_const(is_const) { _data.as_bool = b; }
+        Value(ICustomValue* c, bool is_const = false) : _type(Type::CUSTOM_OBJECT), _is_const(is_const) { _data.as_custom = c; }
         
         ~Value() {
             if(isCustom()) {
@@ -44,6 +45,11 @@ namespace Synapse {
         Value& operator=(const Value& other);
 
         inline Type type() const { return _type; }
+        inline bool is_constant() const { return _is_const; }
+        inline Value& set_is_const(bool is_const) {
+            _is_const = is_const;
+            return *this;
+        }
 
         inline bool isNumber() const { return _type == Type::NUMBER; }
         inline bool isBoolean() const {return _type == Type::BOOLEAN; }
