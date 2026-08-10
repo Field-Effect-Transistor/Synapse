@@ -13,13 +13,10 @@ namespace Synapse {
         UniquePtr<Impl> _impl;
         Context*        _parent;
 
-//      explicit Context(Context* parent = nullptr);
-//      friend class ContextManager;
-
-    public:
         explicit Context(Context* parent = nullptr);
         ~Context();
 
+    public:
         Context(const Context&) = delete;
         Context& operator=(const Context&) = delete;
 
@@ -32,6 +29,9 @@ namespace Synapse {
 
         void defineFunction(const char* name, CallablePtr function);
         ICallable* getFunction(const char* name) const;
+
+        friend class ContextManager;
+        friend class ContextTestWrapper;
     };
 
 } // namespace Synapse

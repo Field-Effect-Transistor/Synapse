@@ -7,6 +7,7 @@ add_library(SynapseCore
     src/Token.cpp
     src/MathEvaluator.cpp
     src/Context.cpp
+    src/ContextManager.cpp
 )
 
 target_include_directories(SynapseCore PUBLIC 

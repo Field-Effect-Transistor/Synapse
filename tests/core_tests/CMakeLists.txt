@@ -8,6 +8,7 @@ add_executable(SynapseCoreTests
     test_parser.cpp
     test_callable.cpp
     test_context.cpp
+    test_context_manager.cpp
 )
 
 target_link_libraries(SynapseCoreTests
