@@ -1,78 +1,106 @@
-//  /cli/main.cpp
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <cmath>
 
 #include "internal/Lexer.hpp"
 #include "internal/Parser.hpp"
-#include "synapse/ASTPrinter.hpp"
 #include "internal/MathEvaluator.hpp"
+#include "synapse/ContextManager.hpp"
+#include "synapse/Context.hpp"
+#include "synapse/Callable.hpp"
+#include "synapse/Exceptions.hpp"
+#include "synapse/Value.hpp"
 
 using namespace Synapse;
 using namespace Synapse::Internal;
 
-void runParserTest(const std::string& testName, const std::string& code) {
-    std::cout << "========== ТЕСТ: " << testName << " ==========\n";
-    std::cout << "Вихідний код : " << code << "\n";
+void setupStandardLibrary(Context* ctx) {
+    ctx->defineVariable("pi", Value(3.141592653589793), true);
+    ctx->defineVariable("e",  Value(2.718281828459045), true);
+
+    // Функція max(a, b)
+    ctx->defineFunction("max", make_callable(2, [](const Vector<Value>& args) {
+        double a = args[0].getNumber();
+        double b = args[1].getNumber();
+        return Value(a > b ? a : b);
+    }));
+
+    // Функція min(a, b)
+    ctx->defineFunction("min", make_callable(2, [](const Vector<Value>& args) {
+        double a = args[0].getNumber();
+        double b = args[1].getNumber();
+        return Value(a < b ? a : b);
+    }));
+
+    // Функція sin(x)
+    ctx->defineFunction("sin", make_callable(1, [](const Vector<Value>& args) {
+        return Value(std::sin(args[0].getNumber()));
+    }));
+}
+
+int main(int argc, char* argv[]) {
+    // 1. Перевіряємо наявність аргументів
+    if (argc < 2) {
+        std::cerr << "Usage: synapse \"<expression>\"\n";
+        std::cerr << "Example: synapse \"max(1, 2) * pi\"\n";
+        return 1;
+    }
+
+    // Збираємо всі аргументи в один рядок (якщо користувач забув лапки)
+    std::string expression = argv[1];
+    for (int i = 2; i < argc; ++i) {
+        expression += " ";
+        expression += argv[i];
+    }
 
     try {
-        // 1. Лексичний аналіз
-        std::istringstream stream(code);
-        Lexer lexer(stream, 1024);
-        Vector<Token> tokens;
+        // 2. Лексичний аналіз (Lexer)
+        std::istringstream stream(expression);
+        Lexer lexer(stream);
         
+        Vector<Token> tokens;
         while (true) {
-            Token t = lexer.fetchNextToken();
+            Token t = lexer.getNextToken();
+            bool is_eof = (t.type == StandardToken::END_OF_FILE);
+            
+            // Пропускаємо коментарі
             if (t.type != StandardToken::COMMENT) {
                 tokens.push_back(std::move(t));
             }
-            if (tokens.back().type == StandardToken::END_OF_FILE) break;
+            
+            if (is_eof) break;
         }
 
-        // 2. Синтаксичний аналіз
+        // 3. Синтаксичний аналіз (Parser)
         Parser parser;
-        ASTNodePtr root = parser.parse(tokens);
+        ASTNodePtr ast = parser.parse(tokens);
 
-        if (!root) {
-            std::cout << "ERROR: empty ast (EOF).\n\n";
-            return;
-        }
+        // 4. Налаштування контексту виконання
+        ContextManager ctx_manager;
+        Context* global_ctx = ctx_manager.getGlobalScope();
+        setupStandardLibrary(global_ctx);
 
-        // 3. Друкуємо AST
-        ASTPrinter printer;
-        root->accept(printer);
-        std::cout << "AST (LISP)   : " << printer.result() << "\n";
+        // 5. Обчислення (MathEvaluator)
+        MathEvaluator evaluator(global_ctx);
+        Value result = ast->accept(evaluator);
 
-        // 4. Обчислюємо результат
-        MathEvaluator eval;
-        Value result = root->accept(eval);
-        std::cout << "Результат    : " << result.getNumber() << "\n";
+        // 6. Вивід результату
+        std::cout << result.to_str() << std::endl;
 
+    } catch (const SyntaxError& e) {
+        std::cerr << "❌ " << e.what() << std::endl;
+        return 2;
+    } catch (const RuntimeError& e) {
+        std::cerr << "❌ " << e.what() << std::endl;
+        return 3;
+    } catch (const HermesException& e) {
+        std::cerr << "❌ Synapse Error: " << e.what() << std::endl;
+        return 4;
     } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << "\n";
+        std::cerr << "❌ Fatal Error: " << e.what() << std::endl;
+        return 5;
     }
-
-    std::cout << "------------------------------------------------\n\n";
-}
-
-int main() {
-    // 1. Перевірка пріоритетів (+ та *)
-    runParserTest("Пріоритет операцій", "2 + 3 * 4");
-
-    // 2. Перевірка дужок (зміна пріоритету)
-    runParserTest("Вплив дужок", "(2 + 3) * 4");
-
-    // 3. Унарні оператори та відсотки
-    runParserTest("Унарний мінус і відсотки", "-50%");
-
-    // 4. Правоасоціативність ступеня
-    runParserTest("Ступінь (Правоасоціативність)", "2 ^ 3 ^ 2");
-
-    // 5. Виклики функцій з аргументами
-    runParserTest("Функції та Змінні", "max(10, 20) * x");
-
-    // 6. Спеціальний тест на обробку синтаксичних помилок
-    runParserTest("Відловлювання помилок", "5 * (10 + 2");
 
     return 0;
 }
