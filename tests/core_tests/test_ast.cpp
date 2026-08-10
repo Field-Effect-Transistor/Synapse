@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "ASTNode.hpp"
-#include "ASTPrinter.hpp"
+#include "synapse/ASTNode.hpp"
+#include "synapse/ASTPrinter.hpp"
 
 using namespace Synapse;
 

@@ -1,11 +1,11 @@
 //  /core/include/synapse/interface/ICallable.hpp
 #pragma once
 
-#include "Value.hpp"
+#include "synapse/Value.hpp"
 #include "Vector.hpp"
 #include "UniquePtr.hpp"
 
-#include "Exceptions.hpp"
+#include "synapse/Exceptions.hpp"
 
 namespace Synapse {
     struct ICallable {

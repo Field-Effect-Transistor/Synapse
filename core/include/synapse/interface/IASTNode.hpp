@@ -1,7 +1,7 @@
 //  /core/include/synapse/interface/IAstNode.hpp
 #pragma once
 
-#include "Value.hpp"
+#include "synapse/Value.hpp"
 #include "UniquePtr.hpp"
 
 namespace Synapse {

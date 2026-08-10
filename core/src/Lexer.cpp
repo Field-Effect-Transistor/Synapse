@@ -1,5 +1,5 @@
 //  /core/src/Lexer.cpp
-#include "Lexer.hpp"
+#include "internal/Lexer.hpp"
 
 #include <cctype>
 #include <cstring>

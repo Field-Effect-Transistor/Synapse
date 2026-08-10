@@ -1,8 +1,8 @@
 //  /core/include/MathEvaluator.hpp
 #pragma once
 
-#include "interface/IVisitor.hpp"
-#include "ASTNode.hpp"
+#include "synapse/interface/IVisitor.hpp"
+#include "synapse/ASTNode.hpp"
 
 namespace Synapse::Internal {
 

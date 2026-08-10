@@ -1,7 +1,7 @@
 //  /core/include.Parser.hpp
 #pragma once
 
-#include "interface/IParser.hpp"
+#include "synapse/interface/IParser.hpp"
 
 #include "UniquePtr.hpp"
 

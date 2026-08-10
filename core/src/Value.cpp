@@ -1,7 +1,7 @@
 //  /core/src/Value.cpp
-#include "Value.hpp"
+#include "synapse/Value.hpp"
 
-#include "Exceptions.hpp"
+#include "synapse/Exceptions.hpp"
 
 namespace Synapse {
 

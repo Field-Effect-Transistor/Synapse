@@ -1,8 +1,8 @@
 //  /tests/core_tests/test_parser.cpp
 #include <gtest/gtest.h>
-#include "Parser.hpp"
-#include "ASTPrinter.hpp"
-#include "Exceptions.hpp"
+#include "internal/Parser.hpp"
+#include "synapse/ASTPrinter.hpp"
+#include "synapse/Exceptions.hpp"
 
 using namespace Synapse;
 using namespace Synapse::Internal;

@@ -1,8 +1,8 @@
 //  /core/src/Parser.cpp
-#include "Parser.hpp"
+#include "internal/Parser.hpp"
 
-#include "ASTNode.hpp"
-#include "Exceptions.hpp"
+#include "synapse/ASTNode.hpp"
+#include "synapse/Exceptions.hpp"
 
 namespace Synapse::Internal {
 

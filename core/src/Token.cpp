@@ -1,5 +1,5 @@
 //  /core/src/Token.cpp
-#include "Token.hpp"
+#include "synapse/Token.hpp"
 
 #include <iomanip>
 #include <iostream>

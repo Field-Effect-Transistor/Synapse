@@ -1,8 +1,8 @@
 //  /core/include/synapse/interface/IParser.hpp
 #pragma once
 
-#include "IASTNode.hpp"
-#include "Token.hpp"
+#include "synapse/interface/IASTNode.hpp"
+#include "synapse/Token.hpp"
 
 #include "Vector.hpp"
 

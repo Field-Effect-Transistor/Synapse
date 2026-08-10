@@ -10,8 +10,7 @@ add_library(SynapseCore
 )
 
 target_include_directories(SynapseCore PUBLIC 
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/synapse
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/internal
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 target_link_libraries(SynapseCore PUBLIC SynapseUtils)

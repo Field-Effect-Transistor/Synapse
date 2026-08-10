@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Value.hpp"
+#include "synapse/Value.hpp"
 
 using namespace Synapse;
 

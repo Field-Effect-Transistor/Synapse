@@ -1,7 +1,7 @@
 //  /core/include/synapse/interface/ILexer.hpp
 #pragma once
 
-#include "Token.hpp"
+#include "synapse/Token.hpp"
 
 #include <cstddef>
 #include <vector>

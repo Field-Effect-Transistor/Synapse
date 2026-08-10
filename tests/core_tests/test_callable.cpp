@@ -1,7 +1,7 @@
 //  /tests/core_tests/test_callable.cpp
 #include <gtest/gtest.h>
-#include "Callable.hpp"
-#include "Exceptions.hpp"
+#include "synapse/Callable.hpp"
+#include "synapse/Exceptions.hpp"
 
 using namespace Synapse;
 

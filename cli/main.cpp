@@ -3,12 +3,13 @@
 #include <sstream>
 #include <string>
 
-#include "Lexer.hpp"
-#include "Parser.hpp"
-#include "ASTPrinter.hpp"
-#include "MathEvaluator.hpp"
+#include "internal/Lexer.hpp"
+#include "internal/Parser.hpp"
+#include "synapse/ASTPrinter.hpp"
+#include "internal/MathEvaluator.hpp"
 
 using namespace Synapse;
+using namespace Synapse::Internal;
 
 void runParserTest(const std::string& testName, const std::string& code) {
     std::cout << "========== ТЕСТ: " << testName << " ==========\n";

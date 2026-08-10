@@ -1,7 +1,7 @@
 //  /tests/core_tests/test_ast_tree_printer.cpp
 #include <gtest/gtest.h>
-#include "ASTTreePrinter.hpp"
-#include "ASTNode.hpp"
+#include "synapse/ASTTreePrinter.hpp"
+#include "synapse/ASTNode.hpp"
 
 using namespace Synapse;
 

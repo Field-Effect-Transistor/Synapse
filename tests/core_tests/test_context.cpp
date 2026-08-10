@@ -1,7 +1,7 @@
 // /tests/core_tests/test_context.cpp
 #include <gtest/gtest.h>
-#include "Context.hpp"
-#include "Callable.hpp"
+#include "synapse/Context.hpp"
+#include "synapse/Callable.hpp"
 #include <stdexcept>
 
 using namespace Synapse;
@@ -19,11 +19,18 @@ protected:
     }
 };
 
+using ContextSymbolsTest        = ContextTest;
+using ContextConstantsTest      = ContextTest;
+using ContextFunctionsTest      = ContextTest;
+using ContextScopeChainTest     = ContextTest;
+using ContextMoveSemanticsTest  = ContextTest;
+
+
 //  ================
 //      SYMBOLS
 //  ================
 
-TEST_F(ContextTest, DefinesAndGetsVariable) {
+TEST_F(ContextSymbolsTest, DefinesAndGetsVariable) {
     Context ctx;
     ctx.defineVariable("x", Value(42.5));
     
@@ -32,12 +39,12 @@ TEST_F(ContextTest, DefinesAndGetsVariable) {
     EXPECT_DOUBLE_EQ(v.getNumber(), 42.5);
 }
 
-TEST_F(ContextTest, ThrowsOnGettingUnknownVariable) {
+TEST_F(ContextSymbolsTest, ThrowsOnGettingUnknownVariable) {
     Context ctx;
     EXPECT_THROW(ctx.getVariable("unknown"), std::runtime_error);
 }
 
-TEST_F(ContextTest, AssignsNewValueToExistingVariable) {
+TEST_F(ContextSymbolsTest, AssignsNewValueToExistingVariable) {
     Context ctx;
     ctx.defineVariable("x", Value(10.0));
     ctx.assignVariable("x", Value(99.0));
@@ -45,12 +52,12 @@ TEST_F(ContextTest, AssignsNewValueToExistingVariable) {
     EXPECT_DOUBLE_EQ(ctx.getVariable("x").getNumber(), 99.0);
 }
 
-TEST_F(ContextTest, ThrowsOnAssigningToUnknownVariable) {
+TEST_F(ContextSymbolsTest, ThrowsOnAssigningToUnknownVariable) {
     Context ctx;
     EXPECT_THROW(ctx.assignVariable("x", Value(10.0)), std::runtime_error);
 }
 
-TEST_F(ContextTest, ThrowsOnRedefiningVariable) {
+TEST_F(ContextSymbolsTest, ThrowsOnRedefiningVariable) {
     Context ctx;
     ctx.defineVariable("x", Value(10.0));
     EXPECT_THROW(ctx.defineVariable("x", Value(20.0)), std::runtime_error);
@@ -60,7 +67,7 @@ TEST_F(ContextTest, ThrowsOnRedefiningVariable) {
 //      CONSTANTS
 //  ================
 
-TEST_F(ContextTest, ThrowsOnAssigningToConstant) {
+TEST_F(ContextConstantsTest, ThrowsOnAssigningToConstant) {
     Context ctx;
     ctx.defineVariable("pi", Value(3.14), true);
     
@@ -72,7 +79,7 @@ TEST_F(ContextTest, ThrowsOnAssigningToConstant) {
 //      FUNCTIONS
 //  ================
 
-TEST_F(ContextTest, DefinesAndGetsFunction) {
+TEST_F(ContextFunctionsTest, DefinesAndGetsFunction) {
     Context ctx;
     
     auto my_func = make_callable(1, [](const Vector<Value>& args) {
@@ -89,13 +96,13 @@ TEST_F(ContextTest, DefinesAndGetsFunction) {
     EXPECT_DOUBLE_EQ(res.getNumber(), 20.0);
 }
 
-TEST_F(ContextTest, ThrowsOnDefiningNullFunction) {
+TEST_F(ContextFunctionsTest, ThrowsOnDefiningNullFunction) {
     Context ctx;
     CallablePtr null_func(nullptr);
     EXPECT_THROW(ctx.defineFunction("bad_func", std::move(null_func)), std::runtime_error);
 }
 
-TEST_F(ContextTest, ThrowsOnRedefiningFunction) {
+TEST_F(ContextFunctionsTest, ThrowsOnRedefiningFunction) {
     Context ctx;
     auto f1 = make_callable(0, [](const Vector<Value>&) { return Value(1.0); });
     auto f2 = make_callable(0, [](const Vector<Value>&) { return Value(2.0); });
@@ -104,7 +111,7 @@ TEST_F(ContextTest, ThrowsOnRedefiningFunction) {
     EXPECT_THROW(ctx.defineFunction("func", std::move(f2)), std::runtime_error);
 }
 
-TEST_F(ContextTest, ThrowsOnGettingUnknownFunction) {
+TEST_F(ContextFunctionsTest, ThrowsOnGettingUnknownFunction) {
     Context ctx;
     EXPECT_THROW(ctx.getFunction("unknown_func"), std::runtime_error);
 }
@@ -113,7 +120,7 @@ TEST_F(ContextTest, ThrowsOnGettingUnknownFunction) {
 //      SCOPE CHAIN
 //  ====================
 
-TEST_F(ContextTest, ChildGetsVariableFromParent) {
+TEST_F(ContextScopeChainTest, ChildGetsVariableFromParent) {
     Context parent;
     parent.defineVariable("global_var", Value(100.0));
 
@@ -121,7 +128,7 @@ TEST_F(ContextTest, ChildGetsVariableFromParent) {
     EXPECT_DOUBLE_EQ(child.getVariable("global_var").getNumber(), 100.0);
 }
 
-TEST_F(ContextTest, ChildShadowsParentVariable) {
+TEST_F(ContextScopeChainTest, ChildShadowsParentVariable) {
     Context parent;
     parent.defineVariable("x", Value(10.0));
 
@@ -132,7 +139,7 @@ TEST_F(ContextTest, ChildShadowsParentVariable) {
     EXPECT_DOUBLE_EQ(parent.getVariable("x").getNumber(), 10.0);
 }
 
-TEST_F(ContextTest, AssignVariableStrictScopingRule) {
+TEST_F(ContextScopeChainTest, AssignVariableStrictScopingRule) {
     Context parent;
     parent.defineVariable("x", Value(10.0));
 
@@ -141,7 +148,7 @@ TEST_F(ContextTest, AssignVariableStrictScopingRule) {
     EXPECT_THROW(child.assignVariable("x", Value(20.0)), std::runtime_error);
 }
 
-TEST_F(ContextTest, ChildGetsFunctionFromParent) {
+TEST_F(ContextScopeChainTest, ChildGetsFunctionFromParent) {
     Context parent;
     auto my_func = make_callable(0, [](const Vector<Value>&) { return Value(77.0); });
     parent.defineFunction("global_func", std::move(my_func));
@@ -157,11 +164,21 @@ TEST_F(ContextTest, ChildGetsFunctionFromParent) {
 //      MOVE SEMANTICS
 //  ========================
 
-TEST_F(ContextTest, MoveConstructorTransfersData) {
+TEST_F(ContextMoveSemanticsTest, MoveConstructorTransfersData) {
     Context original;
     original.defineVariable("x", Value(55.5));
 
     Context moved(std::move(original));
 
     EXPECT_DOUBLE_EQ(moved.getVariable("x").getNumber(), 55.5);
+}
+
+TEST_F(ContextMoveSemanticsTest, MoveAssignmentTransfersData) {
+    Context ctx1;
+    ctx1.defineVariable("magic", Value(77.7));
+
+    Context ctx2;
+    ctx2 = std::move(ctx1);
+
+    EXPECT_DOUBLE_EQ(ctx2.getVariable("magic").getNumber(), 77.7);
 }

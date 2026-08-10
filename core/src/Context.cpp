@@ -1,5 +1,5 @@
 //  /core/src/Context.cpp
-#include "Context.hpp"
+#include "synapse/Context.hpp"
 
 #include <unordered_map>
 

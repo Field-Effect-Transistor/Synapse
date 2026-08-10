@@ -1,7 +1,7 @@
 //  /core/src/MathEvaluator.cpp
-#include "MathEvaluator.hpp"
+#include "internal/MathEvaluator.hpp"
 
-#include "Exceptions.hpp"
+#include "synapse/Exceptions.hpp"
 
 #include <string>
 #include <cmath>
