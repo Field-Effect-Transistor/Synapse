@@ -13,6 +13,22 @@
 using namespace Synapse;
 using namespace Synapse::Internal;
 
+
+class StreamReader : public IReader {
+    std::istream& _is;
+public:
+    StreamReader(std::istream& is) : _is(is) {}
+
+    size_t read(char* buffer, size_t size) override {
+        _is.read(buffer, static_cast<std::streamsize>(size));
+        return static_cast<size_t>(_is.gcount());
+    }
+
+    bool isEOF() const override {
+        return _is.eof();
+    }
+};
+
 class MathEvaluatorTest : public ::testing::Test {
 protected:
     ContextManager manager;
@@ -26,7 +42,10 @@ protected:
         if (!ctx) ctx = global_ctx;
 
         std::istringstream stream(code);
-        Lexer lexer(stream);
+        StreamReader reader(stream);
+        
+        Lexer lexer;
+        lexer.init(&reader);
         
         Vector<Token> tokens;
         while (true) {
@@ -58,7 +77,7 @@ TEST_F(MathEvaluatorTest, EvaluatesBasicMathAndPrecedence) {
     EXPECT_DOUBLE_EQ(eval_code("2 ^ 3").getNumber(), 8.0);
     EXPECT_DOUBLE_EQ(eval_code("10 mod 3").getNumber(), 1.0);
     EXPECT_DOUBLE_EQ(eval_code("-5 + 10").getNumber(), 5.0);
-    EXPECT_DOUBLE_EQ(eval_code("50%").getNumber(), 0.5); // Відсоток
+    EXPECT_DOUBLE_EQ(eval_code("50%").getNumber(), 0.5);
 }
 
 // =============

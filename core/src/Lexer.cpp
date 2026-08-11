@@ -5,7 +5,7 @@
 #include <cstring>
 #include <algorithm>
 
-int stricmp(char const *a, char const *b) {
+static int stricmp(char const *a, char const *b) {
     for(;;++a, ++b) {
         int d = tolower(static_cast<unsigned int>(*a)) - tolower(static_cast<unsigned int>(*b));
         if (d != 0 || !*a) {

@@ -3,9 +3,25 @@
 #include <sstream>
 #include <iostream>
 #include "internal/Lexer.hpp"
+#include "synapse/interface/IReader.hpp"
 
 using namespace Synapse;    
 using namespace Synapse::Internal;
+
+class StreamReader : public IReader {
+    std::istream& _is;
+public:
+    StreamReader(std::istream& is) : _is(is) {}
+
+    size_t read(char* buffer, size_t size) override {
+        _is.read(buffer, static_cast<std::streamsize>(size));
+        return static_cast<size_t>(_is.gcount());
+    }
+
+    bool isEOF() const override {
+        return _is.eof();
+    }
+};
 
 TEST(LexerTest, BasicServiceTokens) {
     // Рядок 0: коментар
@@ -16,7 +32,9 @@ TEST(LexerTest, BasicServiceTokens) {
     // Перевіряємо різні розміри чанків (від дуже малих до повного розміру)
     for (size_t chunk_size = 1; chunk_size <= code.size(); ++chunk_size) {
         std::istringstream stream(code);
-        Lexer lexer(stream, chunk_size);
+        StreamReader reader(stream);
+        Lexer lexer;
+        lexer.init(&reader, chunk_size);
 
         // 1. Коментар
         Token t = lexer.fetchNextToken();
@@ -62,7 +80,9 @@ TEST(LexerTest, BasicServiceTokens) {
 TEST(LexerTest, BasicMathTokens) {
     std::string code = "12.5 + 45 * (2 - .5) / 1.";
     std::istringstream stream(code);
-    Lexer lexer(stream, 15);
+    StreamReader reader(stream);
+    Lexer lexer;
+    lexer.init(&reader, 15);
 
     Token t = lexer.fetchNextToken();
     EXPECT_EQ(t.type, StandardToken::NUMBER);
@@ -106,7 +126,9 @@ TEST(LexerTest, BasicMathTokens) {
 
 TEST(LexerTest, EndOfFileBehavior) {
     std::istringstream stream("");
-    Lexer lexer(stream);
+    StreamReader reader(stream);
+    Lexer lexer;
+    lexer.init(&reader);
 
     Token t = lexer.fetchNextToken();
     EXPECT_EQ(t.type, StandardToken::END_OF_FILE);
@@ -117,7 +139,9 @@ TEST(LexerTest, IdentifiersAndKeywords) {
 
     for (size_t chunk_size = 1; chunk_size <= code.size(); ++chunk_size) {
         std::istringstream stream(code);
-        Lexer lexer(stream, chunk_size);
+        StreamReader reader(stream);
+        Lexer lexer;
+        lexer.init(&reader, chunk_size);
 
         // 1. Звичайна змінна
         Token t = lexer.fetchNextToken();
@@ -140,11 +164,12 @@ TEST(LexerTest, IdentifiersAndKeywords) {
         EXPECT_EQ(t.lexeme, "_v");
     }
 
-
     code = "l123456789";
     for (size_t chunk_size = 1; chunk_size <= code.size(); ++chunk_size) {
         std::istringstream stream(code);
-        Lexer lexer(stream, chunk_size);
+        StreamReader reader(stream);
+        Lexer lexer;
+        lexer.init(&reader, chunk_size);
 
         Token t = lexer.fetchNextToken();
         EXPECT_EQ(t.type, StandardToken::IDENTIFIER);
@@ -156,7 +181,9 @@ TEST(LexerTest, MalformedNumbersAndErrors) {
     std::string code = "12.34.56 100a @";
     
     std::istringstream stream(code);
-    Lexer lexer(stream, 1024);
+    StreamReader reader(stream);
+    Lexer lexer;
+    lexer.init(&reader, 1024);
 
     // 1. Забагато крапок
     Token t = lexer.fetchNextToken();
@@ -177,7 +204,9 @@ TEST(LexerTest, MalformedNumbersAndErrors) {
 TEST(LexerTest, PublicInterfaceMethods) {
     std::string code = "42 +";
     std::istringstream stream(code);
-    Lexer lexer(stream, 1024);
+    StreamReader reader(stream);
+    Lexer lexer;
+    lexer.init(&reader, 1024);
 
     EXPECT_FALSE(lexer.isEOF());
 
@@ -208,7 +237,9 @@ TEST(LexerTest, DivisionAndRemainingOperators) {
     // перед кінцем буфера, коли він не знає, чи буде далі ще один '/'
     for (size_t chunk_size = 1; chunk_size <= code.size(); ++chunk_size) {
         std::istringstream stream(code);
-        Lexer lexer(stream, chunk_size);
+        StreamReader reader(stream);
+        Lexer lexer;
+        lexer.init(&reader, chunk_size);
 
         Token t = lexer.fetchNextToken();
         EXPECT_EQ(t.type, StandardToken::SUB);
@@ -231,7 +262,9 @@ TEST(LexerTest, IgnoresWhitespacesAndCarriageReturns) {
     // Рядок містить пробіли, табуляції (\t) та Windows-style переноси (\r\n)
     std::string code = " \t 100 \r\n \t +";
     std::istringstream stream(code);
-    Lexer lexer(stream, 1024);
+    StreamReader reader(stream);
+    Lexer lexer;
+    lexer.init(&reader, 1024);
 
     Token t = lexer.fetchNextToken();
     EXPECT_EQ(t.type, StandardToken::NUMBER);
@@ -251,7 +284,9 @@ TEST(LexerTest, EOFDuringTokenParsing) {
     // 1. Односимвольне число на межі EOF (Перевіряє рядок відразу після if (isdigit))
     {
         std::istringstream stream("7");
-        Lexer lexer(stream, 1024);
+        StreamReader reader(stream);
+        Lexer lexer;
+        lexer.init(&reader, 1024);
         Token t = lexer.fetchNextToken();
         EXPECT_EQ(t.type, StandardToken::NUMBER);
         EXPECT_EQ(t.lexeme, "7");
@@ -260,7 +295,9 @@ TEST(LexerTest, EOFDuringTokenParsing) {
     // 2. Багатосимвольне число на межі EOF (Перевіряє EOF всередині циклу while)
     {
         std::istringstream stream("42.5");
-        Lexer lexer(stream, 1024);
+        StreamReader reader(stream);
+        Lexer lexer;
+        lexer.init(&reader, 1024);
         Token t = lexer.fetchNextToken();
         EXPECT_EQ(t.type, StandardToken::NUMBER);
         EXPECT_EQ(t.lexeme, "42.5");
@@ -270,7 +307,9 @@ TEST(LexerTest, EOFDuringTokenParsing) {
     // 3. Односимвольний ідентифікатор на межі EOF
     {
         std::istringstream stream("x");
-        Lexer lexer(stream, 1024);
+        StreamReader reader(stream);
+        Lexer lexer;
+        lexer.init(&reader, 1024);
         Token t = lexer.fetchNextToken();
         EXPECT_EQ(t.type, StandardToken::IDENTIFIER);
         EXPECT_EQ(t.lexeme, "x");
@@ -279,7 +318,9 @@ TEST(LexerTest, EOFDuringTokenParsing) {
     // 4. Багатосимвольний ідентифікатор на межі EOF
     {
         std::istringstream stream("my_var");
-        Lexer lexer(stream, 1024);
+        StreamReader reader(stream);
+        Lexer lexer;
+        lexer.init(&reader, 1024);
         Token t = lexer.fetchNextToken();
         EXPECT_EQ(t.type, StandardToken::IDENTIFIER);
         EXPECT_EQ(t.lexeme, "my_var");
@@ -288,7 +329,9 @@ TEST(LexerTest, EOFDuringTokenParsing) {
     // 5. Ключове слово 'mod' точно на межі EOF
     {
         std::istringstream stream("mod");
-        Lexer lexer(stream, 1024);
+        StreamReader reader(stream);
+        Lexer lexer;
+        lexer.init(&reader, 1024);
         Token t = lexer.fetchNextToken();
         EXPECT_EQ(t.type, StandardToken::MOD);
         EXPECT_EQ(t.lexeme, "mod");
@@ -298,7 +341,9 @@ TEST(LexerTest, EOFDuringTokenParsing) {
     {
         // Тут після / йде EOF, але перед ним пробіл. 
         std::istringstream stream("10 / ");
-        Lexer lexer(stream, 1024);
+        StreamReader reader(stream);
+        Lexer lexer;
+        lexer.init(&reader, 1024);
         
         Token t1 = lexer.fetchNextToken();
         EXPECT_EQ(t1.type, StandardToken::NUMBER);

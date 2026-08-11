@@ -11,9 +11,25 @@
 #include "synapse/Callable.hpp"
 #include "synapse/Exceptions.hpp"
 #include "synapse/Value.hpp"
+#include "synapse/interface/IReader.hpp"
 
 using namespace Synapse;
 using namespace Synapse::Internal;
+
+class StreamReader : public IReader {
+    std::istream& _is;
+public:
+    StreamReader(std::istream& is) : _is(is) {}
+
+    size_t read(char* buffer, size_t size) override {
+        _is.read(buffer, static_cast<std::streamsize>(size));
+        return static_cast<size_t>(_is.gcount());
+    }
+
+    bool isEOF() const override {
+        return _is.eof();
+    }
+};
 
 void setupStandardLibrary(Context* ctx) {
     ctx->defineVariable("pi", Value(3.141592653589793), true);
@@ -57,7 +73,10 @@ int main(int argc, char* argv[]) {
     try {
         // 2. Лексичний аналіз (Lexer)
         std::istringstream stream(expression);
-        Lexer lexer(stream);
+        StreamReader reader(stream);
+        
+        Lexer lexer;
+        lexer.init(&reader);
         
         Vector<Token> tokens;
         while (true) {
