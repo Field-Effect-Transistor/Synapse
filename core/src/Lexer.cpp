@@ -113,29 +113,17 @@ namespace Synapse::Internal {
                 }
                 default: {
                     if (isdigit(_chunk[_pos]) || _chunk[_pos] == '.') {
-                        size_t  dot_counter = 0;
-                        bool    valid_token = true;
-
-                        if (_chunk[_pos] == '.') {
-                            dot_counter = 1;
-                        }
+                        size_t dot_counter = (_chunk[_pos] == '.') ? 1 : 0;
+                        bool valid_token = true;
 
                         token.lexeme = _chunk[_pos];
                         token.row = _row;
                         token.column = _col;
                         ++_pos; ++_col;
-                        
-                        if (!_prayForTheChunk()) {
-                            token.type = StandardToken::NUMBER;
-                            token.value = std::stod(token.lexeme);
-                            return token;
-                        }
 
                         while (true) {
                             if (!_prayForTheChunk()) {
-                                token.type = StandardToken::NUMBER;
-                                token.value = std::stod(token.lexeme);
-                                return token;
+                                break;
                             }
                             
                             char c = _chunk[_pos];
@@ -144,22 +132,31 @@ namespace Synapse::Internal {
                                 ++dot_counter;
                             } else if (isdigit(c)) {
                                 token.lexeme += c;
-                            } else if (isalpha(c)) {
+                            } else if (isalpha(c) || c == '_') {
                                 valid_token = false;
                                 token.lexeme += c;
                             } else {
-                                //  new token start or ' ' or \n
-                                if (valid_token && dot_counter <= 1) {
-                                    token.type = StandardToken::NUMBER;
-                                    token.value = std::stod(token.lexeme);
-                                } else {
-                                    token.type = StandardToken::UNKNOWN;
-                                }
                                 break;
                             }
                             
                             ++_pos; ++_col;
                         }
+
+                        if (valid_token && dot_counter <= 1 && token.lexeme != ".") {
+                            token.type = StandardToken::NUMBER;
+                            try {
+                                token.value = std::stod(token.lexeme);
+                            } catch (const std::out_of_range&) {
+                                token.type = StandardToken::ERROR;
+                            }
+                        } else {
+                            if (token.lexeme == ".") {
+                                token.type = StandardToken::ERROR;
+                            } else {
+                                token.type = StandardToken::UNKNOWN;
+                            }
+                        }
+
                         return token;
                     } else if (isalpha(_chunk[_pos]) || _chunk[_pos] == '_') {
                         token.type = StandardToken::IDENTIFIER;
