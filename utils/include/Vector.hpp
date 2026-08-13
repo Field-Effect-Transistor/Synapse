@@ -12,6 +12,11 @@ namespace Synapse {
 
     template<typename T>
     class Vector {
+    public:
+    using iterator = T*;
+    using const_iterator = const T*;
+
+    private:
         T* _data = nullptr;
         size_t _size = 0;
         size_t _capacity = 0;
@@ -62,6 +67,13 @@ namespace Synapse {
 
         T& push_back(const T& value);
         T& push_back(T&& value);
+
+        iterator insert(const_iterator pos, const T& value);
+        iterator insert(const_iterator pos, T&& value);
+        
+        iterator erase(const_iterator pos);
+        iterator erase(const_iterator first, const_iterator last);
+        
         void pop_back() noexcept;
         void clear();
 
@@ -70,14 +82,15 @@ namespace Synapse {
         void reserve(size_t new_cap);
         void resize(size_t new_size);
         void shrink_to_fit();
+        void swap(Vector& other) noexcept;
 
         // Iterators
 
-        T* begin() noexcept { return _data; }
-        const T* begin() const noexcept { return _data; }
+        iterator begin() noexcept { return _data; }
+        const_iterator begin() const noexcept { return _data; }
 
-        T* end() noexcept { return _data + _size; }
-        const T* end() const noexcept { return _data + _size; }
+        iterator end() noexcept { return _data + _size; }
+        const_iterator end() const noexcept { return _data + _size; }
 
     };  //  class Vector
 
@@ -263,6 +276,112 @@ namespace Synapse {
     }
 
     template<typename T>
+    typename Vector<T>::iterator Vector<T>::insert(const_iterator pos, const T& value) {
+        const size_t index = pos - _data;
+
+        if (index > _size) {
+            throw std::out_of_range("Synapse::Vector::insert(): Position is out of bounds");
+        }
+
+        if (_size == _capacity) {
+            reserve(2 * _capacity);
+        }
+
+        if (index < _size) {
+            new (_data + _size) T(std::move_if_noexcept(_data[_size - 1]));
+
+            for (auto it = _size - 1; it > index; --it ) {
+                _data[it] = std::move_if_noexcept(_data[it - 1]);
+            }
+
+            _data[index] = value;
+        } else {
+            new(_data + _size) T(value);
+        }
+
+        ++_size;
+
+        return _data + index;
+    }
+
+    template<typename T>
+    typename Vector<T>::iterator Vector<T>::insert(const_iterator pos, T&& value) {
+        const size_t index = pos - _data;
+
+        if (index > _size) {
+            throw std::out_of_range("Synapse::Vector::insert(): Position is out of bounds");
+        }
+
+        if (_size == _capacity) {
+            reserve(2 * _capacity);
+        }
+
+        if (index < _size) {
+            new (_data + _size) T(std::move_if_noexcept(_data[_size - 1]));
+
+            for (auto it = _size - 1; it > index; --it ) {
+                _data[it] = std::move_if_noexcept(_data[it - 1]);
+            }
+
+            _data[index] = std::move(value);
+        } else {
+            new(_data + _size) T(std::move(value));
+        }
+
+        ++_size;
+
+        return _data + index;
+    }
+
+    template<typename T>
+    typename Vector<T>::iterator Vector<T>::erase(const_iterator pos) {
+        size_t index = pos - _data;
+
+        if (index >= _size) {
+            throw std::out_of_range("Synapse::Vector::erase(): Position is out of bounds");
+        }
+
+        if (index == _size - 1) {
+            pop_back();
+            return end();
+        }
+
+        for (size_t i = index; i < _size - 1; ++i) {
+            _data[i] = std::move(_data[i + 1]);
+        }
+
+        _data[--_size].~T();
+
+        return _data + index;
+    }
+
+    template<typename T>
+    typename Vector<T>::iterator Vector<T>::erase(const_iterator first, const_iterator last) {
+        const size_t fst = first - _data;
+        const size_t lst = last - _data;
+
+        if (fst > _size || lst > _size || fst > lst) {
+            throw std::out_of_range("Synapse::Vector::erase(): Position is out of bounds");
+        }
+
+        if (fst == lst) return _data + fst;
+
+        const size_t count_to_delete = lst - fst;
+
+        for (size_t i = fst; i + count_to_delete < _size; ++i) {
+            _data[i] = std::move(_data[i + count_to_delete]);
+        }
+
+        for (size_t i = _size - count_to_delete; i < _size; ++i) {
+            _data[i].~T();
+        }
+
+        _size -= count_to_delete;
+
+        return _data + fst;
+    }
+
+    template<typename T>
     void Vector<T>::pop_back() noexcept {
         _data[--_size].~T();
     }
@@ -321,6 +440,13 @@ namespace Synapse {
 
         _data = new_data;
         _capacity = _size;
+    }
+
+    template<typename T>
+    void Vector<T>::swap(Vector& other) noexcept {
+        std::swap(this->_data, other._data);
+        std::swap(this->_size, other._size);
+        std::swap(this->_capacity, other._capacity);
     }
 
     template<typename T>

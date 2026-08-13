@@ -51,6 +51,24 @@ struct LifeTimeSpy {
     bool operator==(const LifeTimeSpy& other) const {
         return id == other.id;
     }
+
+    LifeTimeSpy& operator=(const LifeTimeSpy& spy) {
+        if (this != &spy) {
+            id = spy.id;
+            ++copied_count;
+        }
+        return *this;
+    }
+
+    LifeTimeSpy& operator=(LifeTimeSpy&& spy) noexcept {
+        if (this != &spy) {
+            id = spy.id;
+            spy.id = 0;
+            ++moved_count;
+        }
+        return *this;
+    }
+
 };
 
 struct KamikazeObject {
@@ -541,4 +559,159 @@ TEST_F(VectorMemoryTest, CopyAssignmentProvidesStrongExceptionGuarantee) {
     EXPECT_EQ(v2.size(), old_size);
     EXPECT_EQ(v2.capacity(), old_capacity);
     EXPECT_EQ(v2.data(), old_data_ptr);
+}
+
+//  ========================
+//      Insert group
+//  ========================
+
+TEST_F(VectorModifiersTest, InsertSingleElementCopy) {
+    Vector<int> v = {1, 2, 3};
+    
+    auto it = v.insert(v.begin() + 1, 99);
+    
+    EXPECT_EQ(v.size(), 4);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 99);
+    EXPECT_EQ(v[2], 2);
+    EXPECT_EQ(v[3], 3);
+    EXPECT_EQ(*it, 99);
+
+    v.insert(v.begin(), 100);
+    EXPECT_EQ(v.size(), 5);
+    EXPECT_EQ(v[0], 100);
+
+    v.insert(v.end(), 200);
+    EXPECT_EQ(v.size(), 6);
+    EXPECT_EQ(v[5], 200);
+}
+
+TEST_F(VectorModifiersTest, InsertCausesReallocationCorrectly) {
+    Vector<int> v;
+    v.reserve(2);
+    v.push_back(1);
+    v.push_back(2);
+    
+    EXPECT_EQ(v.capacity(), 2);
+    
+    v.insert(v.begin() + 1, 99);
+    
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_GE(v.capacity(), 4);
+    EXPECT_EQ(v[1], 99);
+}
+
+TEST_F(VectorModifiersTest, InsertMoveSemanticsAndShift) {
+    Vector<LifeTimeSpy> v;
+    v.push_back(LifeTimeSpy());
+    v.push_back(LifeTimeSpy());
+    
+    auto copied_before = LifeTimeSpy::copied_count;
+    auto moved_before = LifeTimeSpy::moved_count;
+
+    v.insert(v.begin() + 1, LifeTimeSpy());
+
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(LifeTimeSpy::copied_count, copied_before); // ЖОДНИХ КОПІЙ!
+    EXPECT_GT(LifeTimeSpy::moved_count, moved_before);
+}
+
+TEST_F(VectorModifiersTest, InsertThrowsOnOutOfBounds) {
+    Vector<int> v = {1, 2};
+    EXPECT_THROW(v.insert(v.begin() + 3, 99), std::out_of_range);
+}
+
+//  ========================
+//      Erase group
+//  ========================
+
+TEST_F(VectorModifiersTest, EraseSingleElement) {
+    Vector<int> v = {1, 2, 3, 4};
+    
+    auto it = v.erase(v.begin() + 1);
+    
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 3);
+    EXPECT_EQ(v[2], 4);
+    EXPECT_EQ(*it, 3);
+
+    v.erase(v.end() - 1);
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v[1], 3);
+}
+
+TEST_F(VectorModifiersTest, EraseSingleElementDestroysObject) {
+    Vector<LifeTimeSpy> v;
+    v.push_back(LifeTimeSpy());
+    v.push_back(LifeTimeSpy());
+    v.push_back(LifeTimeSpy());
+
+    auto destroyed_before = LifeTimeSpy::destroyed_count;
+    
+    v.erase(v.begin() + 1);
+
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(LifeTimeSpy::destroyed_count, destroyed_before + 1);
+}
+
+TEST_F(VectorModifiersTest, EraseRangeCorrectlyShiftsElements) {
+    Vector<int> v = {1, 2, 3, 4, 5};
+    
+    auto it = v.erase(v.begin() + 1, v.begin() + 3);
+    
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 4);
+    EXPECT_EQ(v[2], 5);
+    EXPECT_EQ(*it, 4);
+
+    v.erase(v.begin(), v.end());
+    EXPECT_TRUE(v.empty());
+}
+
+TEST_F(VectorModifiersTest, EraseRangeDestroysMultipleObjects) {
+    Vector<LifeTimeSpy> v;
+    for(int i=0; i<5; ++i) v.push_back(LifeTimeSpy());
+
+    auto destroyed_before = LifeTimeSpy::destroyed_count;
+    
+    v.erase(v.begin() + 1, v.begin() + 4);
+
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(LifeTimeSpy::destroyed_count, destroyed_before + 3);
+}
+
+TEST_F(VectorModifiersTest, EraseThrowsOnOutOfBounds) {
+    Vector<int> v = {1, 2, 3};
+    
+    EXPECT_THROW(v.erase(v.begin() + 5), std::out_of_range);
+    EXPECT_THROW(v.erase(v.begin() + 1, v.begin() + 5), std::out_of_range);
+    EXPECT_THROW(v.erase(v.begin() + 2, v.begin() + 1), std::out_of_range);
+}
+
+//  ========================
+//      Swap group
+//  ========================
+
+TEST_F(VectorModifiersTest, SwapExchangesInternalPointers) {
+    Vector<int> v1 = {1, 2, 3};
+    Vector<int> v2 = {99, 100};
+
+    int* data1 = v1.data();
+    int* data2 = v2.data();
+    size_t cap1 = v1.capacity();
+    size_t cap2 = v2.capacity();
+
+    v1.swap(v2);
+
+    EXPECT_EQ(v1.size(), 2);
+    EXPECT_EQ(v1.capacity(), cap2);
+    EXPECT_EQ(v1.data(), data2);
+    EXPECT_EQ(v1[0], 99);
+
+    EXPECT_EQ(v2.size(), 3);
+    EXPECT_EQ(v2.capacity(), cap1);
+    EXPECT_EQ(v2.data(), data1);
+    EXPECT_EQ(v2[0], 1);
 }
