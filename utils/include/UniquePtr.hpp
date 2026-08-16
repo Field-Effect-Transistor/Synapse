@@ -10,7 +10,7 @@ namespace Synapse {
         void operator()(T* ptr) const {
             delete ptr;
         }
-    };  //  struct  StandartDelter
+    };  //  struct  StandardDeleter
 
     template<
         typename T,
