@@ -8,6 +8,7 @@ add_library(SynapseCore
     src/MathEvaluator.cpp
     src/Context.cpp
     src/ContextManager.cpp
+    src/PluginRegistry.cpp
     src/plugins/StdLibPlugin.cpp
 )
 
