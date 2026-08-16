@@ -6,6 +6,7 @@
 #include <stdexcept>
 
 using namespace Synapse;
+using CallablePtr = ICallable::Ptr;
 
 namespace Synapse {
     class ContextTestWrapper final {

@@ -229,4 +229,8 @@ namespace Synapse::Internal {
         return peekToken().type == StandardToken::END_OF_FILE;
     }
 
+    void Lexer::destroy() {
+        delete this;
+    }
+
 }   //  namespace   Synapse::Internal

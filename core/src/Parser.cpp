@@ -14,63 +14,63 @@ namespace Synapse::Internal {
         throw SyntaxError(error_message, bad_token.row, bad_token.column);
     }
 
-    ASTNodePtr  Parser::_parseExpression() {
-        ASTNodePtr left = _parseTerm();
+    IASTNode::Ptr   Parser::_parseExpression() {
+        IASTNode::Ptr  left = _parseTerm();
 
         while(_match({StandardToken::ADD, StandardToken::SUB})) {
             Token op = _previous();
-            ASTNodePtr right = _parseTerm();
-            left = ASTNodePtr(new BinaryNode(std::move(op), std::move(left), std::move(right)));
+            IASTNode::Ptr  right = _parseTerm();
+            left = IASTNode::Ptr(new BinaryNode(std::move(op), std::move(left), std::move(right)));
         }
 
         return left;
     }
 
-    ASTNodePtr  Parser::_parseTerm() {
-        ASTNodePtr left = _parsePower();
+    IASTNode::Ptr   Parser::_parseTerm() {
+        IASTNode::Ptr  left = _parsePower();
 
         while (_match({StandardToken::DIV, StandardToken::MOD, StandardToken::MUL})) {
             Token op = _previous();
-            ASTNodePtr right = _parsePower();
-            left = ASTNodePtr(new BinaryNode(std::move(op), std::move(left), std::move(right)));
+            IASTNode::Ptr  right = _parsePower();
+            left = IASTNode::Ptr(new BinaryNode(std::move(op), std::move(left), std::move(right)));
         }
 
         return left;
     }
 
-    ASTNodePtr  Parser::_parsePower() {
-        ASTNodePtr left = _parseFactor();
+    IASTNode::Ptr   Parser::_parsePower() {
+        IASTNode::Ptr  left = _parseFactor();
         if (_check(StandardToken::POW)) {
             Token op = _advance();
-            ASTNodePtr right = _parsePower();
-            left = ASTNodePtr(new BinaryNode(std::move(op), std::move(left), std::move(right)));
+            IASTNode::Ptr  right = _parsePower();
+            left = IASTNode::Ptr(new BinaryNode(std::move(op), std::move(left), std::move(right)));
         }
         return left;
     }
 
-    ASTNodePtr  Parser::_parseFactor() {
+    IASTNode::Ptr   Parser::_parseFactor() {
         if (_match({StandardToken::ADD, StandardToken::SUB})) {
             Token prev = _previous();
-            ASTNodePtr  prim = _parseFactor();
-            return  ASTNodePtr(new UnaryNode(prev, std::move(prim)));
+            IASTNode::Ptr   prim = _parseFactor();
+            return  IASTNode::Ptr(new UnaryNode(prev, std::move(prim)));
         }
 
-        ASTNodePtr  prim = _parsePrim();
+        IASTNode::Ptr   prim = _parsePrim();
         while (_match({StandardToken::PERCENT})) {
             Token post = _previous();
-            prim = ASTNodePtr(new UnaryNode(std::move(post), std::move(prim)));
+            prim = IASTNode::Ptr(new UnaryNode(std::move(post), std::move(prim)));
         }
 
         return prim;
     }
 
-    ASTNodePtr Parser::_parsePrim() {
+    IASTNode::Ptr  Parser::_parsePrim() {
         if (_match({StandardToken::NUMBER})) {
-            return ASTNodePtr(new LiteralNode(_previous()));
+            return IASTNode::Ptr(new LiteralNode(_previous()));
         }
 
         if (_match({StandardToken::LPAREN})) {
-            ASTNodePtr expression = _parseExpression();
+            IASTNode::Ptr  expression = _parseExpression();
             _consume(StandardToken::RPAREN, "Syntax error: Expected ')' after expression.");
             return expression;
         }
@@ -79,7 +79,7 @@ namespace Synapse::Internal {
             Token id_token = _previous();
 
             if (_match({StandardToken::LPAREN})) {
-                Vector<ASTNodePtr> args;
+                Vector<IASTNode::Ptr> args;
 
                 if (!_check(StandardToken::RPAREN)) {
                     do {
@@ -89,10 +89,10 @@ namespace Synapse::Internal {
 
                 _consume(StandardToken::RPAREN, "Syntax error: Expected ')' after function arguments.");
 
-                return ASTNodePtr(new FunctionNode(id_token, std::move(args)));
+                return IASTNode::Ptr(new FunctionNode(id_token, std::move(args)));
             }
 
-            return ASTNodePtr(new VariableNode(id_token));
+            return IASTNode::Ptr(new VariableNode(id_token));
         }
 
         Token bad_token = _peek();
@@ -100,7 +100,7 @@ namespace Synapse::Internal {
                   bad_token.row, bad_token.column);
     }
 
-    ASTNodePtr Parser::parse(const Vector<Token>& tokens) {
+    IASTNode::Ptr  Parser::parse(const Vector<Token>& tokens) {
         _tokens = &tokens;
         _current = 0;
         
@@ -108,7 +108,7 @@ namespace Synapse::Internal {
             throw SyntaxError("empty equation!"); 
         }
 
-        ASTNodePtr root = _parseExpression();
+        IASTNode::Ptr  root = _parseExpression();
 
         if (!_isAtEnd()) {
             Token bad_token = _peek();
@@ -117,6 +117,10 @@ namespace Synapse::Internal {
         }
 
         return root;
+    }
+
+    void Parser::destroy() {
+        delete this;
     }
 
 }   //  namespace   Synapse::Internal

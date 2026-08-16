@@ -27,7 +27,7 @@ namespace Synapse {
         void assignVariable(const char* name, Value val);
         Value getVariable(const char* name) const;
 
-        void defineFunction(const char* name, CallablePtr function);
+        void defineFunction(const char* name, ICallable::Ptr function);
         ICallable* getFunction(const char* name) const;
 
         friend class ContextManager;

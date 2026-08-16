@@ -40,10 +40,10 @@ namespace Synapse {
     };  //  class Functional
 
     template<typename CallableType>
-    CallablePtr make_callable(size_t arity, CallableType&& func) {
+    ICallable::Ptr make_callable(size_t arity, CallableType&& func) {
         using CleanType = std::decay_t<CallableType>;
         ICallable* raw_ptr = new Functional<CleanType>(std::forward<CallableType>(func), arity);
-        return CallablePtr(raw_ptr);
+        return ICallable::Ptr(raw_ptr);
     }
 
 }   // namespace Synapse

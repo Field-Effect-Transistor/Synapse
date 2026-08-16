@@ -4,6 +4,7 @@
 #include "synapse/ASTNode.hpp"
 
 using namespace Synapse;
+using ASTNodePtr = IASTNode::Ptr;
 
 TEST(ASTStructPrinterTest, PrintsTreeStructureCorrectly) {
     ASTNodePtr  _5(new LiteralNode(Token(StandardToken::NUMBER, 5.0, "5", 0, 0))),

@@ -4,6 +4,7 @@
 #include "synapse/Exceptions.hpp"
 
 using namespace Synapse;
+using CallablePtr = ICallable::Ptr;
 
 // =================
 //      MOCKS

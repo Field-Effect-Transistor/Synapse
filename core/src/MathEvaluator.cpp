@@ -9,6 +9,10 @@
 
 namespace Synapse::Internal {
 
+    void MathEvaluator::destroy() {
+        delete this;
+    }
+
     Value MathEvaluator::visit(VariableNode& node) {
         if (!_context) throw RuntimeError("Evaluation Context is null!");
         

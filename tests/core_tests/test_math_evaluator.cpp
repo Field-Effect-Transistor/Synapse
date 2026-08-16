@@ -12,6 +12,7 @@
 
 using namespace Synapse;
 using namespace Synapse::Internal;
+using ASTNodePtr = IASTNode::Ptr;
 
 
 class StreamReader : public IReader {

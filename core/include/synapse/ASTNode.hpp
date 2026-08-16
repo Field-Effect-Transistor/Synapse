@@ -60,30 +60,34 @@ namespace Synapse {
     };  //  struct  VariableNode
 
     struct UnaryNode final : ASTNodeBase<UnaryNode> {
-        Token       _token;
-        ASTNodePtr  _child;
+        Token           _token;
+        IASTNode::Ptr   _child;
         
         UnaryNode(
             Token t,
-            ASTNodePtr  child
+            IASTNode::Ptr child
         ): _token(std::move(t)), _child(std::move(child)) {};
         ~UnaryNode() = default;
 
         bool compare(const UnaryNode& other) const override {
-            return  this->_token == other._token && 
-                    this->_child->is_equal(*other._child); 
+            if (this->_token != other._token) return false;
+            
+            if (!this->_child && !other._child) return true;
+            if (!this->_child || !other._child) return false;
+            
+            return this->_child->is_equal(*other._child); 
         }
     };  //  struct  ASTUnanyNode
 
     struct BinaryNode final : ASTNodeBase<BinaryNode> {
-        Token       _token;
-        ASTNodePtr  _left;
-        ASTNodePtr  _right;
+        Token           _token;
+        IASTNode::Ptr   _left;
+        IASTNode::Ptr   _right;
 
         BinaryNode(
-            Token       t,
-            ASTNodePtr  left, 
-            ASTNodePtr  right 
+            Token           t,
+            IASTNode::Ptr   left, 
+            IASTNode::Ptr   right 
         ) : _token(std::move(t)), _left(std::move(left)), _right(std::move(right))  {}
         ~BinaryNode() = default;
 
@@ -103,12 +107,12 @@ namespace Synapse {
     };  //  struct  BinaryNode
 
     struct FunctionNode final : ASTNodeBase<FunctionNode> {
-        Token              _token;
-        Vector<ASTNodePtr> _args;
+        Token                   _token;
+        Vector<IASTNode::Ptr>   _args;
 
         FunctionNode(
-            Token               token,
-            Vector<ASTNodePtr>  args
+            Token                   token,
+            Vector<IASTNode::Ptr>   args
         ) : _token(std::move(token)), _args(std::move(args)) {}
         ~FunctionNode() = default;
 

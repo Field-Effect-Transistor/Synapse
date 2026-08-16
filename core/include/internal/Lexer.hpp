@@ -66,6 +66,8 @@ namespace Synapse::Internal {
             _is_token = false;
         }
 
+        void destroy() override;
+
         Token fetchNextToken();
 
         Token getNextToken() override;

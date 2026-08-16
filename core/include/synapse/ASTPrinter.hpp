@@ -12,7 +12,7 @@ namespace Synapse {
     public:
         ASTPrinter() = default;
         ~ASTPrinter() = default;
-
+        void destroy() override { delete this; }
 
         Value visit(LiteralNode& node) override {
             _output += node._token.lexeme;

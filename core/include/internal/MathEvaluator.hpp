@@ -15,6 +15,7 @@ namespace Synapse::Internal {
     public:
         MathEvaluator(Context* ctx) : _context(ctx) {}
         ~MathEvaluator() = default;
+        void destroy() override;
 
         MathEvaluator(const MathEvaluator&) = delete;
         MathEvaluator& operator=(const MathEvaluator&) = delete;

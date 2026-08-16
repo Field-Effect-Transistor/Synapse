@@ -3,6 +3,7 @@
 #include "synapse/ASTPrinter.hpp"
 
 using namespace Synapse;
+using ASTNodePtr = IASTNode::Ptr;
 
 TEST(ASTTest, TestViaPrinter) {
     ASTNodePtr  _5(new LiteralNode(Token(StandardToken::NUMBER, 5.0, "5", 0, 0))),

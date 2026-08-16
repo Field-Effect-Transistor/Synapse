@@ -1,8 +1,11 @@
 //  /core/include/synapse/interface/IPlugin.hpp
 #pragma once
+#include "IABIObject.hpp"
 
 #include "synapse/Context.hpp"
 #include "synapse/Value.hpp"
+
+#include "UniquePtr.hpp"
 
 namespace Synapse {
     struct ICallable;
@@ -64,7 +67,7 @@ namespace Synapse {
 
     };  //  PluginManifest
 
-    struct IPlugin {
+    struct IPlugin : IABIObject<IPlugin> {
         virtual ~IPlugin() = default;
         virtual void destroy() = 0;
 
@@ -74,4 +77,9 @@ namespace Synapse {
 
         virtual PluginManifest getManifest() const = 0;
     };  //  struct  IPlugin
+
+    struct PluginDeleter {
+        void operator()(IPlugin* ptr) const { if (ptr) ptr->destroy(); }
+    };
+
 }   //  namespace   Synapse

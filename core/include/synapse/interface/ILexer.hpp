@@ -1,5 +1,6 @@
 //  /core/include/synapse/interface/ILexer.hpp
 #pragma once
+#include "IABIObject.hpp"
 
 #include "synapse/Token.hpp"
 #include "synapse/interface/IReader.hpp"
@@ -8,7 +9,7 @@
 
 namespace Synapse {
 
-    struct ILexer {
+    struct ILexer : IABIObject<ILexer> {
         virtual ~ILexer() = default;
 
         virtual void init(IReader* reader, size_t chunk_size = 1024) = 0;
@@ -17,4 +18,5 @@ namespace Synapse {
         virtual const Token& peekToken() = 0;
         virtual bool isEOF() = 0;
     };  //  struct  ILexer
+    
 }   //  namespace   Synapse

@@ -7,7 +7,7 @@ namespace Synapse {
 
     struct Context::Impl {
         std::unordered_map<std::string, Value>          _symbols;
-        std::unordered_map<std::string, CallablePtr>    _functions;
+        std::unordered_map<std::string, ICallable::Ptr>    _functions;
     };  //  struct  Context::Impl
 
     Context::Context(Context* parent) : _impl(new Impl), _parent(parent) {}
@@ -55,7 +55,7 @@ namespace Synapse {
         throw std::runtime_error("Variable '" + key + "' is not defined!");
     }
 
-    void Context::defineFunction(const char* name, CallablePtr function) {
+    void Context::defineFunction(const char* name, ICallable::Ptr function) {
         std::string key(name);
         
         if (!function) {

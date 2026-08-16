@@ -56,14 +56,16 @@ namespace Synapse::Internal {
             return false;
         }
 
-        ASTNodePtr  _parseExpression();
-        ASTNodePtr  _parseTerm();
-        ASTNodePtr  _parsePower();
-        ASTNodePtr  _parseFactor();
-        ASTNodePtr  _parsePrim();
+        IASTNode::Ptr   _parseExpression();
+        IASTNode::Ptr   _parseTerm();
+        IASTNode::Ptr   _parsePower();
+        IASTNode::Ptr   _parseFactor();
+        IASTNode::Ptr   _parsePrim();
+
+        void destroy() override;
 
     public:
-        ASTNodePtr parse(const Vector<Token>& tokens) override;
+        IASTNode::Ptr parse(const Vector<Token>& tokens) override;
 
     };  //  class   Parser
 }   //  namespace   Synapse::Internal
