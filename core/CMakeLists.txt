@@ -9,6 +9,9 @@ add_library(SynapseCore
     src/Context.cpp
     src/ContextManager.cpp
     src/PluginRegistry.cpp
+    src/Calculator.cpp
+    src/CalculatorBuilder.cpp
+
     src/plugins/StdLibPlugin.cpp
 )
 
