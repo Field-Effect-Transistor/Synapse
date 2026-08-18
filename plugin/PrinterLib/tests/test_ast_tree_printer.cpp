@@ -1,9 +1,11 @@
-//  /tests/core_tests/test_ast_tree_printer.cpp
+//  /plugin/PrinterLib/tests/test_ast_tree_printer.cpp
 #include <gtest/gtest.h>
-#include "synapse/ASTTreePrinter.hpp"
+#include "ASTTreePrinter.hpp"
 #include "synapse/ASTNode.hpp"
 
 using namespace Synapse;
+using namespace PrinterLib;
+
 using ASTNodePtr = IASTNode::Ptr;
 
 TEST(ASTStructPrinterTest, PrintsTreeStructureCorrectly) {
@@ -18,6 +20,7 @@ TEST(ASTStructPrinterTest, PrintsTreeStructureCorrectly) {
     Vector<ASTNodePtr> max_args;
     max_args.push_back(std::move(_2));
     max_args.push_back(std::move(_x));
+    
     ASTNodePtr  _max2x(new FunctionNode(
         Token(StandardToken::IDENTIFIER, 0, "max", 0, 0), 
         std::move(max_args)
@@ -26,7 +29,8 @@ TEST(ASTStructPrinterTest, PrintsTreeStructureCorrectly) {
     ASTNodePtr  _root(new BinaryNode(Token(StandardToken::MUL, 0, "*", 0, 0), std::move(_m5p3), std::move(_max2x)));
 
     ASTTreePrinter printer;
-    _root->accept(printer);
+    
+    Value result_val = _root->accept(printer);
 
     std::string expected_output = R"(*
 ├── +
@@ -38,5 +42,8 @@ TEST(ASTStructPrinterTest, PrintsTreeStructureCorrectly) {
     └── x
 )";
 
-    EXPECT_EQ(printer.result(), expected_output);
+    ASSERT_TRUE(result_val.isCustom()) << "Expected a custom value to be returned";
+    std::string actual_output = result_val.getCustom()->to_str();
+
+    EXPECT_EQ(actual_output, expected_output);
 }

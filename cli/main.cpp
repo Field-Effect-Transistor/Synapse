@@ -12,9 +12,12 @@
 #include "synapse/Exceptions.hpp"
 #include "synapse/Value.hpp"
 #include "synapse/interface/IReader.hpp"
+#include "synapse/ASTNode.hpp"
 
 using namespace Synapse;
 using namespace Synapse::Internal;
+
+using ASTNodePtr = IASTNode::Ptr;
 
 class StreamReader : public IReader {
     std::istream& _is;

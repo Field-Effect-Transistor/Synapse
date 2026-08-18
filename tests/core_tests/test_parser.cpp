@@ -1,13 +1,12 @@
 //  /tests/core_tests/test_parser.cpp
 #include <gtest/gtest.h>
 #include "internal/Parser.hpp"
-#include "synapse/ASTPrinter.hpp"
 #include "synapse/Exceptions.hpp"
+#include "synapse/ASTNode.hpp"
 
 using namespace Synapse;
 using namespace Synapse::Internal;
 using ASTNodePtr = IASTNode::Ptr;
-
 
 class ParserTest : public testing::Test {
 protected:
@@ -25,16 +24,6 @@ protected:
         }
         res.push_back(Token(StandardToken::END_OF_FILE, 0, "", 0, 0));
         return res;
-    }
-
-    std::string ast_to_string(ASTNodePtr& tree) {
-        static ASTPrinter printer;
-        if (!tree) {
-            return "null";
-        }
-        printer.clear();
-        tree->accept(printer);
-        return printer.result();
     }
     
 };  //  class   ParserTest

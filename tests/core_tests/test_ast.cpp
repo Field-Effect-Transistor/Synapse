@@ -1,33 +1,141 @@
+// /tests/core_tests/test_ast.cpp
 #include <gtest/gtest.h>
 #include "synapse/ASTNode.hpp"
-#include "synapse/ASTPrinter.hpp"
+#include "synapse/Token.hpp"
+#include "Vector.hpp"
 
 using namespace Synapse;
 using ASTNodePtr = IASTNode::Ptr;
 
-TEST(ASTTest, TestViaPrinter) {
-    ASTNodePtr  _5(new LiteralNode(Token(StandardToken::NUMBER, 5.0, "5", 0, 0))),
-                _3(new LiteralNode(Token(StandardToken::NUMBER, 3.0, "3", 0, 0))),
-                _2(new LiteralNode(Token(StandardToken::NUMBER, 2.0, "2", 0, 0))),
-                _x(new VariableNode(Token(StandardToken::IDENTIFIER, 0, "x", 0, 0)));
+class ASTNodeTest : public ::testing::Test {
+protected:
+    Token numToken(double val, const char* lexeme) {
+        return Token(StandardToken::NUMBER, val, lexeme, 0, 0);
+    }
     
-    ASTNodePtr  _m5(new UnaryNode(Token(StandardToken::SUB, 0, "-", 0, 0), std::move(_5)));
+    Token varToken(const char* name) {
+        return Token(StandardToken::IDENTIFIER, 0, name, 0, 0);
+    }
+    
+    Token opToken(TokenType type, const char* op) {
+        return Token(type, 0, op, 0, 0);
+    }
+};
 
-    ASTNodePtr  _m5p3(new BinaryNode(Token(StandardToken::ADD, 0, "+", 0, 0), std::move(_m5), std::move(_3)));
+using ASTLeafNodesTest = ASTNodeTest;
+using ASTOperatorNodesTest = ASTNodeTest;
+using ASTFunctionNodesTest = ASTNodeTest;
 
-    Vector<ASTNodePtr> max_args;
-    max_args.push_back(std::move(_2));
-    max_args.push_back(std::move(_x));
 
-    ASTNodePtr _max2x(new FunctionNode(
-        Token(StandardToken::IDENTIFIER, 0, "max", 0, 0), 
-        std::move(max_args)
+TEST_F(ASTLeafNodesTest, LiteralNodesEquality) {
+    ASTNodePtr a(new LiteralNode(numToken(5.0, "5")));
+    ASTNodePtr b(new LiteralNode(numToken(5.0, "5")));
+    ASTNodePtr c(new LiteralNode(numToken(10.0, "10")));
+
+    EXPECT_TRUE(*a == *b);
+    EXPECT_FALSE(*a == *c);
+    EXPECT_TRUE(*a != *c);
+}
+
+TEST_F(ASTLeafNodesTest, VariableNodesEquality) {
+    ASTNodePtr x1(new VariableNode(varToken("x")));
+    ASTNodePtr x2(new VariableNode(varToken("x")));
+    ASTNodePtr y(new VariableNode(varToken("y")));
+
+    EXPECT_TRUE(*x1 == *x2);
+    EXPECT_TRUE(*x1 != *y);
+    
+    ASTNodePtr fake_var(new LiteralNode(varToken("x")));
+    EXPECT_FALSE(*x1 == *fake_var);
+}
+
+
+TEST_F(ASTOperatorNodesTest, UnaryNodesEquality) {
+    ASTNodePtr u1(new UnaryNode(
+        opToken(StandardToken::SUB, "-"), 
+        ASTNodePtr(new LiteralNode(numToken(5.0, "5")))
     ));
     
-    ASTNodePtr  _root(new BinaryNode(Token(StandardToken::MUL, 0, "*", 0, 0), std::move(_m5p3), std::move(_max2x)));
+    ASTNodePtr u2(new UnaryNode(
+        opToken(StandardToken::SUB, "-"), 
+        ASTNodePtr(new LiteralNode(numToken(5.0, "5")))
+    ));
+    
+    ASTNodePtr u3(new UnaryNode(
+        opToken(StandardToken::ADD, "+"), 
+        ASTNodePtr(new LiteralNode(numToken(5.0, "5")))
+    ));
 
-    ASTPrinter printer;
-    _root->accept(printer);
+    EXPECT_TRUE(*u1 == *u2);
+    EXPECT_TRUE(*u1 != *u3);
+}
 
-    EXPECT_EQ(printer.result(), "( * ( + ( - 5 ) 3 ) ( max 2 x ) )");
+TEST_F(ASTOperatorNodesTest, BinaryNodesEquality) {
+    ASTNodePtr b1(new BinaryNode(
+        opToken(StandardToken::ADD, "+"),
+        ASTNodePtr(new LiteralNode(numToken(2.0, "2"))),
+        ASTNodePtr(new LiteralNode(numToken(3.0, "3")))
+    ));
+
+    ASTNodePtr b2(new BinaryNode(
+        opToken(StandardToken::ADD, "+"),
+        ASTNodePtr(new LiteralNode(numToken(2.0, "2"))),
+        ASTNodePtr(new LiteralNode(numToken(3.0, "3")))
+    ));
+
+    ASTNodePtr b3(new BinaryNode(
+        opToken(StandardToken::ADD, "+"),
+        ASTNodePtr(new LiteralNode(numToken(2.0, "2"))),
+        ASTNodePtr(new LiteralNode(numToken(4.0, "4")))
+    ));
+
+    EXPECT_TRUE(*b1 == *b2);
+    EXPECT_TRUE(*b1 != *b3);
+}
+
+TEST_F(ASTOperatorNodesTest, ComplexMathematicalTreeEquality) {
+    ASTNodePtr left1(new BinaryNode(
+        opToken(StandardToken::ADD, "+"),
+        ASTNodePtr(new UnaryNode(opToken(StandardToken::SUB, "-"), ASTNodePtr(new LiteralNode(numToken(5.0, "5"))))),
+        ASTNodePtr(new LiteralNode(numToken(3.0, "3")))
+    ));
+    ASTNodePtr root1(new BinaryNode(
+        opToken(StandardToken::MUL, "*"),
+        std::move(left1),
+        ASTNodePtr(new LiteralNode(numToken(2.0, "2")))
+    ));
+
+    ASTNodePtr left2(new BinaryNode(
+        opToken(StandardToken::ADD, "+"),
+        ASTNodePtr(new UnaryNode(opToken(StandardToken::SUB, "-"), ASTNodePtr(new LiteralNode(numToken(5.0, "5"))))),
+        ASTNodePtr(new LiteralNode(numToken(3.0, "3")))
+    ));
+    ASTNodePtr root2(new BinaryNode(
+        opToken(StandardToken::MUL, "*"),
+        std::move(left2),
+        ASTNodePtr(new LiteralNode(numToken(2.0, "2")))
+    ));
+
+    EXPECT_TRUE(*root1 == *root2);
+}
+
+
+TEST_F(ASTFunctionNodesTest, FunctionNodesEquality) {
+    Vector<ASTNodePtr> args1;
+    args1.push_back(ASTNodePtr(new LiteralNode(numToken(2.0, "2"))));
+    args1.push_back(ASTNodePtr(new VariableNode(varToken("x"))));
+    ASTNodePtr f1(new FunctionNode(varToken("max"), std::move(args1)));
+
+    Vector<ASTNodePtr> args2;
+    args2.push_back(ASTNodePtr(new LiteralNode(numToken(2.0, "2"))));
+    args2.push_back(ASTNodePtr(new VariableNode(varToken("x"))));
+    ASTNodePtr f2(new FunctionNode(varToken("max"), std::move(args2)));
+
+    Vector<ASTNodePtr> args3;
+    args3.push_back(ASTNodePtr(new LiteralNode(numToken(2.0, "2"))));
+    args3.push_back(ASTNodePtr(new VariableNode(varToken("y"))));
+    ASTNodePtr f3(new FunctionNode(varToken("max"), std::move(args3)));
+
+    EXPECT_TRUE(*f1 == *f2);
+    EXPECT_TRUE(*f1 != *f3);
 }
