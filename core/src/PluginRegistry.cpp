@@ -1,5 +1,7 @@
 //  /core/src/PluginRegistry.cpp
 #include "synapse/PluginRegistry.hpp"
+
+#include "synapse/DynamicLibrary.hpp"
 #include "synapse/Context.hpp"
 
 #include <cstring>
@@ -26,7 +28,7 @@ namespace Synapse {
                 }
             };
 
-            Vector<FactoryEntry> _data;
+            Vector<FactoryEntry> _entries;
 
         public:
             Vector<FactoryEntry> find_with_plugin(const char* name) const;
@@ -43,8 +45,9 @@ namespace Synapse {
         };
 
         //  CONTAINERS
-        Vector<IPlugin::Ptr> _plugins;
-        Vector<PluginInfo> _plugin_infos;
+        Vector<DynamicLibrary>  _libraries;
+        Vector<IPlugin::Ptr>    _plugins;
+        Vector<PluginInfo>      _plugin_infos;
 
         Vector<PluginManifest::VariableDecl> _pending_vars;
         Vector<PluginManifest::FunctionDecl> _pending_funcs;
@@ -55,17 +58,19 @@ namespace Synapse {
         FactoryRegistry<PluginManifest::ContextualVisitorFactory>   _contextual_visitors;
     };
 
-    // FACTORY REGISTRY INNERS
+    //  ----------------------------
+    //      FACTORY REGISTRY
+    //  ----------------------------
 
     template<typename FactoryType>
     auto PluginRegistry::Impl::FactoryRegistry<FactoryType>::find_with_plugin(const char* name) const -> Vector<FactoryEntry> {
         Vector<FactoryEntry> result;
-        if (_data.empty()) return result;
+        if (_plugins.empty()) return result;
 
         FactoryEntry target { name, "", nullptr, nullptr };
-        auto it = std::lower_bound(_data.begin(), _data.end(), target);
+        auto it = std::lower_bound(_plugins.begin(), _plugins.end(), target);
 
-        while (it != _data.end() && std::strcmp(it->plugin_name, name) == 0) {
+        while (it != _plugins.end() && std::strcmp(it->plugin_name, name) == 0) {
             result.push_back(*it);
             ++it;
         }
@@ -75,7 +80,7 @@ namespace Synapse {
     template<typename FactoryType>
     auto PluginRegistry::Impl::FactoryRegistry<FactoryType>::find_with_tool(const char* name) const -> Vector<FactoryEntry> {
         Vector<FactoryEntry> result;
-        for (const auto& entry : _data) {
+        for (const auto& entry : _entries) {
             if (std::strcmp(entry.tool_name, name) == 0) {
                 result.push_back(entry);
             }
@@ -85,12 +90,12 @@ namespace Synapse {
 
     template<typename FactoryType>
     auto PluginRegistry::Impl::FactoryRegistry<FactoryType>::find(const char* plugin_name, const char* tool_name) const -> FactoryEntry {
-        if (_data.empty()) return FactoryEntry{};
+        if (_entries.empty()) return FactoryEntry{};
 
         FactoryEntry target { plugin_name, tool_name, nullptr, nullptr };
-        auto res = std::lower_bound(_data.begin(), _data.end(), target);
+        auto res = std::lower_bound(_entries.begin(), _entries.end(), target);
         
-        if (res != _data.end() && 
+        if (res != _entries.end() && 
             std::strcmp(res->plugin_name, plugin_name) == 0 && 
             std::strcmp(res->tool_name, tool_name) == 0) 
         {
@@ -111,7 +116,7 @@ namespace Synapse {
             return find(plugin.c_str(), tool.c_str());
         }
 
-        //  smart tool seartch
+        //  smart tool search
         auto candidates = find_with_tool(name);
         if (candidates.empty()) return FactoryEntry{};
         if (candidates.size() > 1) {
@@ -135,28 +140,28 @@ namespace Synapse {
     auto PluginRegistry::Impl::FactoryRegistry<FactoryType>::push(const char* plugin, const char* tool, const char* desc, FactoryType factory) -> FactoryRegistry<FactoryType>& {
         FactoryEntry entry {plugin, tool, desc, factory};
         
-        if (_data.empty()) {
-            _data.push_back(std::move(entry));
+        if (_entries.empty()) {
+            _entries.push_back(std::move(entry));
             return *this;
         }
 
-        auto insertion_point = std::lower_bound(_data.begin(), _data.end(), entry);
+        auto insertion_point = std::lower_bound(_entries.begin(), _entries.end(), entry);
 
-        if (insertion_point != _data.end() && 
+        if (insertion_point != _entries.end() && 
             std::strcmp(insertion_point->plugin_name, plugin) == 0 &&
             std::strcmp(insertion_point->tool_name, tool) == 0) 
         {
             throw std::runtime_error(std::string("Factory `") + plugin + "." + tool + "` already exists!");
         }
 
-        _data.insert(insertion_point, std::move(entry));
+        _entries.insert(insertion_point, std::move(entry));
         return *this;
     }
 
     template<typename FactoryType>
     Vector<ToolInfo> PluginRegistry::Impl::FactoryRegistry<FactoryType>::getAvailableTools() const {
         Vector<ToolInfo> info;
-        for (const auto& entry : _data) {
+        for (const auto& entry : _entries) {
             info.push_back({
                 entry.plugin_name ? entry.plugin_name : "", 
                 entry.tool_name ? entry.tool_name : "", 
@@ -167,13 +172,28 @@ namespace Synapse {
     }
 
 
-    //  PLUGIN REGISTRY
+    //  ------------------------
+    //      PLUGIN REGISTRY
+    //  ------------------------
 
     PluginRegistry::PluginRegistry() : _impl(new Impl()) {}
     PluginRegistry::~PluginRegistry() = default;
 
     PluginRegistry::PluginRegistry(PluginRegistry&&) noexcept = default;
     PluginRegistry& PluginRegistry::operator=(PluginRegistry&&) noexcept = default;
+
+    //  Dynamic Library
+
+    void PluginRegistry::loadFromFile(const char* path) {
+        DynamicLibrary lib(path);
+
+        IPlugin::Ptr plugin = lib.getSymbol();
+
+        loadPlugin(std::move(plugin));
+        this->_impl->_libraries.push_back(std::move(lib));
+    }
+
+    //  Lifecycle
 
     void PluginRegistry::loadPlugin(IPlugin::Ptr plugin) {
         if (!plugin) return;

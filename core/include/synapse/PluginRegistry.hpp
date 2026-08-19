@@ -43,6 +43,9 @@ namespace Synapse {
         PluginRegistry(PluginRegistry&&) noexcept;
         PluginRegistry& operator=(PluginRegistry&&) noexcept;
 
+        //  DYNAMIC LIBRARY
+        void loadFromFile(const char* name);
+
         //  LIFECYCLE
         void loadPlugin(IPlugin::Ptr plugin);
         void fillContext(Context* ctx);

@@ -11,6 +11,7 @@ add_library(SynapseCore
     src/PluginRegistry.cpp
     src/Calculator.cpp
     src/CalculatorBuilder.cpp
+    src/DynamicLibrary.cpp
 
     src/plugins/StdLibPlugin.cpp
 )
