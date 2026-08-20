@@ -65,12 +65,12 @@ namespace Synapse {
     template<typename FactoryType>
     auto PluginRegistry::Impl::FactoryRegistry<FactoryType>::find_with_plugin(const char* name) const -> Vector<FactoryEntry> {
         Vector<FactoryEntry> result;
-        if (_plugins.empty()) return result;
+        if (_entries.empty()) return result;
 
         FactoryEntry target { name, "", nullptr, nullptr };
-        auto it = std::lower_bound(_plugins.begin(), _plugins.end(), target);
+        auto it = std::lower_bound(_entries.begin(), _entries.end(), target);
 
-        while (it != _plugins.end() && std::strcmp(it->plugin_name, name) == 0) {
+        while (it != _entries.end() && std::strcmp(it->plugin_name, name) == 0) {
             result.push_back(*it);
             ++it;
         }

@@ -2,16 +2,17 @@
 #pragma once
 #include "IABIObject.hpp"
 
-#include "synapse/Context.hpp"
 #include "synapse/Value.hpp"
 
 #include "UniquePtr.hpp"
+#include "Vector.hpp"
 
 namespace Synapse {
     struct ICallable;
     struct ILexer;
     struct IParser;
     struct IVisitor;
+    class  Context;
 
     struct PluginManifest {
         using CallableFactory           = ICallable* (*)();
@@ -77,9 +78,5 @@ namespace Synapse {
 
         virtual PluginManifest getManifest() const = 0;
     };  //  struct  IPlugin
-
-    struct PluginDeleter {
-        void operator()(IPlugin* ptr) const { if (ptr) ptr->destroy(); }
-    };
 
 }   //  namespace   Synapse

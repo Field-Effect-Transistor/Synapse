@@ -11,6 +11,7 @@ add_executable(SynapseCoreTests
     test_math_evaluator.cpp
     test_plugin_registry.cpp
     test_calculator.cpp
+    test_synapse_engine.cpp
 )
 
 target_link_libraries(SynapseCoreTests
