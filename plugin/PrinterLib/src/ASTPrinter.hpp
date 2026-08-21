@@ -19,6 +19,9 @@ namespace PrinterLib {
         ~ASTPrinter();
         void destroy() override;
 
+        const Role getRole() const override { return Role::Producer; }
+        void setContext(ExecutionContext* ctx) override {};
+
         Value visit(LiteralNode& node) override;
         Value visit(VariableNode& node) override;
         Value visit(BinaryNode& node) override;

@@ -2,12 +2,14 @@
 #include "synapse/PluginRegistry.hpp"
 
 #include "synapse/DynamicLibrary.hpp"
-#include "synapse/Context.hpp"
+#include "synapse/ExecutionContext.hpp"
+#include "synapse/Module.hpp"
 
 #include <cstring>
 #include <algorithm>
 #include <stdexcept>
 #include <unordered_map>
+#include <string>
 
 namespace Synapse {
 
@@ -49,13 +51,11 @@ namespace Synapse {
         Vector<IPlugin::Ptr>    _plugins;
         Vector<PluginInfo>      _plugin_infos;
 
-        Vector<PluginManifest::VariableDecl> _pending_vars;
-        Vector<PluginManifest::FunctionDecl> _pending_funcs;
+        std::unordered_map<std::string, PluginManifest> _manifests;
 
-        FactoryRegistry<PluginManifest::LexerFactory>               _lexers;
-        FactoryRegistry<PluginManifest::ParserFactory>              _parsers;
-        FactoryRegistry<PluginManifest::SimpleVisitorFactory>       _simple_visitors;
-        FactoryRegistry<PluginManifest::ContextualVisitorFactory>   _contextual_visitors;
+        FactoryRegistry<PluginManifest::LexerFactory>   _lexers;
+        FactoryRegistry<PluginManifest::ParserFactory>  _parsers;
+        FactoryRegistry<PluginManifest::VisitorFactory> _visitors;
     };
 
     //  ----------------------------
@@ -65,12 +65,12 @@ namespace Synapse {
     template<typename FactoryType>
     auto PluginRegistry::Impl::FactoryRegistry<FactoryType>::find_with_plugin(const char* name) const -> Vector<FactoryEntry> {
         Vector<FactoryEntry> result;
-        if (_plugins.empty()) return result;
+        if (_entries.empty()) return result;
 
         FactoryEntry target { name, "", nullptr, nullptr };
-        auto it = std::lower_bound(_plugins.begin(), _plugins.end(), target);
+        auto it = std::lower_bound(_entries.begin(), _entries.end(), target);
 
-        while (it != _plugins.end() && std::strcmp(it->plugin_name, name) == 0) {
+        while (it != _entries.end() && std::strcmp(it->plugin_name, name) == 0) {
             result.push_back(*it);
             ++it;
         }
@@ -208,24 +208,26 @@ namespace Synapse {
 
         PluginManifest m = plugin->getManifest();
 
-        for (auto& var : m.variables) _impl->_pending_vars.push_back(std::move(var));
-        for (auto& func : m.functions) _impl->_pending_funcs.push_back(std::move(func));
-
         for (auto& lex : m.lexers) _impl->_lexers.push(p_name, lex.name, lex.description, lex.factory);
         for (auto& par : m.parsers) _impl->_parsers.push(p_name, par.name, par.description, par.factory);
-        for (auto& vis : m.simple_visitors) _impl->_simple_visitors.push(p_name, vis.name, vis.description, vis.factory);
-        for (auto& vis : m.contextual_visitors) _impl->_contextual_visitors.push(p_name, vis.name, vis.description, vis.factory);
+        for (auto& vis : m.visitors) _impl->_visitors.push(p_name, vis.name, vis.description, vis.factory);
+
+        _impl->_manifests[p_name] = std::move(m);
 
         _impl->_plugins.push_back(std::move(plugin));
     }
 
-    void PluginRegistry::fillContext(Context* ctx) {
-        if (!ctx) return;
-        for (const auto& var : _impl->_pending_vars) {
-            ctx->defineVariable(var.name, var.value, var.is_const);
-        }
-        for (const auto& func : _impl->_pending_funcs) {
-            ctx->defineFunction(func.name, ICallable::Ptr(func.function()));
+    void PluginRegistry::fillModule(Module& mod, const char* plugin_name) const {
+        auto it = _impl->_manifests.find(plugin_name);
+        if (it != _impl->_manifests.end()) {
+            for (const auto& var : it->second.variables) {
+                mod.getTable().defineVariable(var.name, var.value, var.is_const);
+            }
+            for (const auto& func : it->second.functions) {
+                mod.getTable().defineFunction(func.name, ICallable::Ptr(func.function()));
+            }
+        } else {
+            throw std::runtime_error(std::string("Cannot fill module: plugin '") + plugin_name + "' is not loaded.");
         }
     }
 
@@ -233,8 +235,7 @@ namespace Synapse {
     Vector<PluginInfo> PluginRegistry::getLoadedPlugins() const { return _impl->_plugin_infos; }
     Vector<ToolInfo> PluginRegistry::getAvailableLexers() const { return _impl->_lexers.getAvailableTools(); }
     Vector<ToolInfo> PluginRegistry::getAvailableParsers() const { return _impl->_parsers.getAvailableTools(); }
-    Vector<ToolInfo> PluginRegistry::getAvailableSimpleVisitors() const { return _impl->_simple_visitors.getAvailableTools(); }
-    Vector<ToolInfo> PluginRegistry::getAvailableContextualVisitors() const { return _impl->_contextual_visitors.getAvailableTools(); }
+    Vector<ToolInfo> PluginRegistry::getAvailableVisitors() const { return _impl->_visitors.getAvailableTools(); }
 
     //  FACTORY API (Exact)
     ILexer::Ptr PluginRegistry::createLexer(const char* p, const char* n) const {
@@ -247,13 +248,8 @@ namespace Synapse {
         if (!f) throw std::runtime_error(std::string("Parser not found: ") + p + "." + n);
         return IParser::Ptr(f());
     }
-    IVisitor::Ptr PluginRegistry::createSimpleVisitor(const char* p, const char* n) const {
-        auto f = _impl->_simple_visitors.find(p, n).factory;
-        if (!f) throw std::runtime_error(std::string("Visitor not found: ") + p + "." + n);
-        return IVisitor::Ptr(f());
-    }
-    IVisitor::Ptr PluginRegistry::createContextualVisitor(const char* p, const char* n, Context* ctx) const {
-        auto f = _impl->_contextual_visitors.find(p, n).factory;
+    IVisitor::Ptr PluginRegistry::createVisitor(const char* p, const char* n, ExecutionContext* ctx) const {
+        auto f = _impl->_visitors.find(p, n).factory;
         if (!f) throw std::runtime_error(std::string("Contextual Visitor not found: ") + p + "." + n);
         return IVisitor::Ptr(f(ctx));
     }
@@ -269,13 +265,8 @@ namespace Synapse {
         if (!f) throw std::runtime_error(std::string("Parser not found: ") + n);
         return IParser::Ptr(f());
     }
-    IVisitor::Ptr PluginRegistry::createSimpleVisitor(const char* n) const {
-        auto f = _impl->_simple_visitors.findSmart(n).factory;
-        if (!f) throw std::runtime_error(std::string("Visitor not found: ") + n);
-        return IVisitor::Ptr(f());
-    }
-    IVisitor::Ptr PluginRegistry::createContextualVisitor(const char* n, Context* ctx) const {
-        auto f = _impl->_contextual_visitors.findSmart(n).factory;
+    IVisitor::Ptr PluginRegistry::createVisitor(const char* n, ExecutionContext* ctx) const {
+        auto f = _impl->_visitors.findSmart(n).factory;
         if (!f) throw std::runtime_error(std::string("Contextual Visitor not found: ") + n);
         return IVisitor::Ptr(f(ctx));
     }
@@ -283,12 +274,10 @@ namespace Synapse {
     //  VALIDATION API
     bool PluginRegistry::hasLexer(const char* p, const char* n) const { return _impl->_lexers.has(p, n); }
     bool PluginRegistry::hasParser(const char* p, const char* n) const { return _impl->_parsers.has(p, n); }
-    bool PluginRegistry::hasSimpleVisitor(const char* p, const char* n) const { return _impl->_simple_visitors.has(p, n); }
-    bool PluginRegistry::hasContextualVisitor(const char* p, const char* n) const { return _impl->_contextual_visitors.has(p, n); }
+    bool PluginRegistry::hasVisitor(const char* p, const char* n) const { return _impl->_visitors.has(p, n); }
 
     bool PluginRegistry::hasLexer(const char* n) const { return _impl->_lexers.hasSmart(n); }
     bool PluginRegistry::hasParser(const char* n) const { return _impl->_parsers.hasSmart(n); }
-    bool PluginRegistry::hasSimpleVisitor(const char* n) const { return _impl->_simple_visitors.hasSmart(n); }
-    bool PluginRegistry::hasContextualVisitor(const char* n) const { return _impl->_contextual_visitors.hasSmart(n); }
+    bool PluginRegistry::hasVisitor(const char* n) const { return _impl->_visitors.hasSmart(n); }
 
 } // namespace Synapse

@@ -2,8 +2,8 @@
 #include <gtest/gtest.h>
 #include <sstream>
 
-#include "synapse/ContextManager.hpp"
-#include "synapse/Context.hpp"
+#include "synapse/ExecutionContext.hpp"
+#include "synapse/Module.hpp"
 #include "synapse/Callable.hpp"
 #include "internal/Lexer.hpp"
 #include "internal/Parser.hpp"
@@ -32,15 +32,15 @@ public:
 
 class MathEvaluatorTest : public ::testing::Test {
 protected:
-    ContextManager manager;
-    Context* global_ctx;
+    Module global_mod{"Global"};
+    ExecutionContext global_ctx; // Тепер це просто об'єкт, ніяких вказівників і менеджерів!
 
     void SetUp() override {
-        global_ctx = manager.getGlobalScope();
+        global_ctx.importModule(&global_mod);
     }
 
-    Value eval_code(const std::string& code, Context* ctx = nullptr) {
-        if (!ctx) ctx = global_ctx;
+    Value eval_code(const std::string& code, ExecutionContext* ctx = nullptr) {
+        if (!ctx) ctx = &global_ctx; // Беремо адресу об'єкта
 
         std::istringstream stream(code);
         StreamReader reader(stream);
@@ -68,9 +68,9 @@ protected:
     }
 };
 
-// =====================
+// --------------------
 //      BASIC MATH
-// =====================
+// --------------------
 TEST_F(MathEvaluatorTest, EvaluatesBasicMathAndPrecedence) {
     EXPECT_DOUBLE_EQ(eval_code("2 + 2 * 2").getNumber(), 6.0);
     EXPECT_DOUBLE_EQ(eval_code("(2 + 2) * 2").getNumber(), 8.0);
@@ -81,19 +81,19 @@ TEST_F(MathEvaluatorTest, EvaluatesBasicMathAndPrecedence) {
     EXPECT_DOUBLE_EQ(eval_code("50%").getNumber(), 0.5);
 }
 
-// =============
+// ------------
 //      VARS
-// =============
+// ------------
 TEST_F(MathEvaluatorTest, EvaluatesVariablesFromContext) {
-    global_ctx->defineVariable("x", Value(10.0));
-    global_ctx->defineVariable("y", Value(5.0));
+    global_ctx.defineVariable("x", Value(10.0)); // Крапка замість ->
+    global_ctx.defineVariable("y", Value(5.0));
 
     EXPECT_DOUBLE_EQ(eval_code("x * y + 2").getNumber(), 52.0);
 }
 
-// =================
+// ----------------
 //      FUNCS
-// =================
+// ----------------
 TEST_F(MathEvaluatorTest, EvaluatesFunctionCalls) {
     auto my_max = make_callable(2, [](const Vector<Value>& args) {
         double a = args[0].getNumber();
@@ -101,17 +101,17 @@ TEST_F(MathEvaluatorTest, EvaluatesFunctionCalls) {
         return Value(a > b ? a : b);
     });
 
-    global_ctx->defineFunction("max", std::move(my_max));
-    global_ctx->defineVariable("x", Value(5.0));
+    global_mod.getTable().defineFunction("max", std::move(my_max));
+    global_ctx.defineVariable("x", Value(5.0));
 
     EXPECT_DOUBLE_EQ(eval_code("max(x, 10) * 2").getNumber(), 20.0);
     
     EXPECT_DOUBLE_EQ(eval_code("max(1, max(2, 3))").getNumber(), 3.0);
 }
 
-// =============================
+// ----------------------------
 //      RUNTIME EXCEPTIONS
-// =============================
+// ----------------------------
 TEST_F(MathEvaluatorTest, ThrowsOnRuntimeErrors) {
     // Ділення на нуль
     EXPECT_THROW(eval_code("10 / 0"), RuntimeError);
@@ -125,7 +125,7 @@ TEST_F(MathEvaluatorTest, ThrowsOnRuntimeErrors) {
 
     // Погана кількість аргументів (Arity)
     auto my_sqrt = make_callable(1, [](const Vector<Value>& args) { return Value(1.0); });
-    global_ctx->defineFunction("sqrt", std::move(my_sqrt));
+    global_mod.getTable().defineFunction("sqrt", std::move(my_sqrt));
 
     EXPECT_THROW(eval_code("sqrt(10, 20)"), ArityMismatchError);
 }

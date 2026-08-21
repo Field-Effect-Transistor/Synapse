@@ -3,8 +3,10 @@
 #include "IABIObject.hpp"
 
 #include "synapse/Value.hpp"
+#include <cstdint>
 
 namespace Synapse {
+    class ExecutionContext;
     
     struct LiteralNode;
     struct VariableNode;
@@ -13,6 +15,13 @@ namespace Synapse {
     struct FunctionNode;
 
     struct IVisitor : IABIObject<IVisitor> {
+        enum class Role : uint8_t {
+            Preprocessor,
+            Producer
+        };  
+
+        virtual void setContext(ExecutionContext*) = 0;
+        virtual const Role getRole() const = 0;
         virtual Value visit(LiteralNode& node) = 0;
         virtual Value visit(VariableNode& node) = 0;
         virtual Value visit(BinaryNode& node) = 0;

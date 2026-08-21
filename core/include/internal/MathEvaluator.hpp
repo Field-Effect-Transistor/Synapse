@@ -5,15 +5,15 @@
 #include "synapse/ASTNode.hpp"
 
 namespace Synapse {
-    class Context;
+    class ExecutionContext;
 }   //  namespace   Synapse
 
 namespace Synapse::Internal {
 
     class MathEvaluator final : public IVisitor {
-        Context* _context = nullptr;
+        ExecutionContext* _context = nullptr;
     public:
-        MathEvaluator(Context* ctx) : _context(ctx) {}
+        MathEvaluator(ExecutionContext* ctx) : _context(ctx) {}
         ~MathEvaluator() = default;
         void destroy() override;
 
@@ -29,6 +29,9 @@ namespace Synapse::Internal {
             meval._context = nullptr;
             return *this;
         }
+
+        const Role getRole() const override { return Role::Producer; }
+        void setContext(ExecutionContext* ctx) override;
 
         Value visit(VariableNode& node) override;
         Value visit(LiteralNode& node) override;

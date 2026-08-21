@@ -1,61 +1,16 @@
+// src/main.cpp
 #include <iostream>
-#include <sstream>
 #include <string>
-#include <cmath>
 
-#include "internal/Lexer.hpp"
-#include "internal/Parser.hpp"
-#include "internal/MathEvaluator.hpp"
-#include "synapse/ContextManager.hpp"
-#include "synapse/Context.hpp"
-#include "synapse/Callable.hpp"
+#include "synapse/SynapseEngine.hpp"
 #include "synapse/Exceptions.hpp"
 #include "synapse/Value.hpp"
-#include "synapse/interface/IReader.hpp"
-#include "synapse/ASTNode.hpp"
 
 using namespace Synapse;
-using namespace Synapse::Internal;
 
-using ASTNodePtr = IASTNode::Ptr;
-
-class StreamReader : public IReader {
-    std::istream& _is;
-public:
-    StreamReader(std::istream& is) : _is(is) {}
-
-    size_t read(char* buffer, size_t size) override {
-        _is.read(buffer, static_cast<std::streamsize>(size));
-        return static_cast<size_t>(_is.gcount());
-    }
-
-    bool isEOF() const override {
-        return _is.eof();
-    }
-};
-
-void setupStandardLibrary(Context* ctx) {
-    ctx->defineVariable("pi", Value(3.141592653589793), true);
-    ctx->defineVariable("e",  Value(2.718281828459045), true);
-
-    // Функція max(a, b)
-    ctx->defineFunction("max", make_callable(2, [](const Vector<Value>& args) {
-        double a = args[0].getNumber();
-        double b = args[1].getNumber();
-        return Value(a > b ? a : b);
-    }));
-
-    // Функція min(a, b)
-    ctx->defineFunction("min", make_callable(2, [](const Vector<Value>& args) {
-        double a = args[0].getNumber();
-        double b = args[1].getNumber();
-        return Value(a < b ? a : b);
-    }));
-
-    // Функція sin(x)
-    ctx->defineFunction("sin", make_callable(1, [](const Vector<Value>& args) {
-        return Value(std::sin(args[0].getNumber()));
-    }));
+// Оголошуємо C-функцію створення вбудованого плагіна стандартної бібліотеки
+namespace Synapse::Plugin {
+    extern "C" IPlugin* create_stdlib_plugin();
 }
 
 int main(int argc, char* argv[]) {
@@ -74,40 +29,25 @@ int main(int argc, char* argv[]) {
     }
 
     try {
-        // 2. Лексичний аналіз (Lexer)
-        std::istringstream stream(expression);
-        StreamReader reader(stream);
-        
-        Lexer lexer;
-        lexer.init(&reader);
-        
-        Vector<Token> tokens;
-        while (true) {
-            Token t = lexer.getNextToken();
-            bool is_eof = (t.type == StandardToken::END_OF_FILE);
-            
-            // Пропускаємо коментарі
-            if (t.type != StandardToken::COMMENT) {
-                tokens.push_back(std::move(t));
-            }
-            
-            if (is_eof) break;
-        }
+        // 2. Ініціалізуємо рушій Synapse
+        SynapseEngine engine;
 
-        // 3. Синтаксичний аналіз (Parser)
-        Parser parser;
-        ASTNodePtr ast = parser.parse(tokens);
+        // 3. Завантажуємо стандартну бібліотеку (вона сама додасть pi, e, sin, max, min, лексери, парсери тощо)
+        engine.loadPlugin(IPlugin::Ptr(Plugin::create_stdlib_plugin()));
 
-        // 4. Налаштування контексту виконання
-        ContextManager ctx_manager;
-        Context* global_ctx = ctx_manager.getGlobalScope();
-        setupStandardLibrary(global_ctx);
+        // 4. Створюємо рецепт калькулятора (якими інструментами з плагінів користуватися)
+        Calculator::Recipe recipe;
+        recipe.lexer = "stdlib.Standard Lexer";
+        recipe.parser = "stdlib.Standard Parser";
+        recipe.evaluator = "stdlib.Math Evaluator";
 
-        // 5. Обчислення (MathEvaluator)
-        MathEvaluator evaluator(global_ctx);
-        Value result = ast->accept(evaluator);
+        // 5. Створюємо головну сесію (середовище виконання) та перемикаємось на неї
+        engine.createSession("main", recipe);
 
-        // 6. Вивід результату
+        // 6. Виконуємо код
+        Value result = engine.evaluate(expression);
+
+        // 7. Виводимо результат
         std::cout << result.to_str() << std::endl;
 
     } catch (const SyntaxError& e) {
