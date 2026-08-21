@@ -53,10 +53,9 @@ namespace Synapse {
 
         std::unordered_map<std::string, PluginManifest> _manifests;
 
-        FactoryRegistry<PluginManifest::LexerFactory>               _lexers;
-        FactoryRegistry<PluginManifest::ParserFactory>              _parsers;
-        FactoryRegistry<PluginManifest::SimpleVisitorFactory>       _simple_visitors;
-        FactoryRegistry<PluginManifest::ContextualVisitorFactory>   _contextual_visitors;
+        FactoryRegistry<PluginManifest::LexerFactory>   _lexers;
+        FactoryRegistry<PluginManifest::ParserFactory>  _parsers;
+        FactoryRegistry<PluginManifest::VisitorFactory> _visitors;
     };
 
     //  ----------------------------
@@ -211,8 +210,7 @@ namespace Synapse {
 
         for (auto& lex : m.lexers) _impl->_lexers.push(p_name, lex.name, lex.description, lex.factory);
         for (auto& par : m.parsers) _impl->_parsers.push(p_name, par.name, par.description, par.factory);
-        for (auto& vis : m.simple_visitors) _impl->_simple_visitors.push(p_name, vis.name, vis.description, vis.factory);
-        for (auto& vis : m.contextual_visitors) _impl->_contextual_visitors.push(p_name, vis.name, vis.description, vis.factory);
+        for (auto& vis : m.visitors) _impl->_visitors.push(p_name, vis.name, vis.description, vis.factory);
 
         _impl->_manifests[p_name] = std::move(m);
 
@@ -237,8 +235,7 @@ namespace Synapse {
     Vector<PluginInfo> PluginRegistry::getLoadedPlugins() const { return _impl->_plugin_infos; }
     Vector<ToolInfo> PluginRegistry::getAvailableLexers() const { return _impl->_lexers.getAvailableTools(); }
     Vector<ToolInfo> PluginRegistry::getAvailableParsers() const { return _impl->_parsers.getAvailableTools(); }
-    Vector<ToolInfo> PluginRegistry::getAvailableSimpleVisitors() const { return _impl->_simple_visitors.getAvailableTools(); }
-    Vector<ToolInfo> PluginRegistry::getAvailableContextualVisitors() const { return _impl->_contextual_visitors.getAvailableTools(); }
+    Vector<ToolInfo> PluginRegistry::getAvailableVisitors() const { return _impl->_visitors.getAvailableTools(); }
 
     //  FACTORY API (Exact)
     ILexer::Ptr PluginRegistry::createLexer(const char* p, const char* n) const {
@@ -251,13 +248,8 @@ namespace Synapse {
         if (!f) throw std::runtime_error(std::string("Parser not found: ") + p + "." + n);
         return IParser::Ptr(f());
     }
-    IVisitor::Ptr PluginRegistry::createSimpleVisitor(const char* p, const char* n) const {
-        auto f = _impl->_simple_visitors.find(p, n).factory;
-        if (!f) throw std::runtime_error(std::string("Visitor not found: ") + p + "." + n);
-        return IVisitor::Ptr(f());
-    }
-    IVisitor::Ptr PluginRegistry::createContextualVisitor(const char* p, const char* n, ExecutionContext* ctx) const {
-        auto f = _impl->_contextual_visitors.find(p, n).factory;
+    IVisitor::Ptr PluginRegistry::createVisitor(const char* p, const char* n, ExecutionContext* ctx) const {
+        auto f = _impl->_visitors.find(p, n).factory;
         if (!f) throw std::runtime_error(std::string("Contextual Visitor not found: ") + p + "." + n);
         return IVisitor::Ptr(f(ctx));
     }
@@ -273,13 +265,8 @@ namespace Synapse {
         if (!f) throw std::runtime_error(std::string("Parser not found: ") + n);
         return IParser::Ptr(f());
     }
-    IVisitor::Ptr PluginRegistry::createSimpleVisitor(const char* n) const {
-        auto f = _impl->_simple_visitors.findSmart(n).factory;
-        if (!f) throw std::runtime_error(std::string("Visitor not found: ") + n);
-        return IVisitor::Ptr(f());
-    }
-    IVisitor::Ptr PluginRegistry::createContextualVisitor(const char* n, ExecutionContext* ctx) const {
-        auto f = _impl->_contextual_visitors.findSmart(n).factory;
+    IVisitor::Ptr PluginRegistry::createVisitor(const char* n, ExecutionContext* ctx) const {
+        auto f = _impl->_visitors.findSmart(n).factory;
         if (!f) throw std::runtime_error(std::string("Contextual Visitor not found: ") + n);
         return IVisitor::Ptr(f(ctx));
     }
@@ -287,12 +274,10 @@ namespace Synapse {
     //  VALIDATION API
     bool PluginRegistry::hasLexer(const char* p, const char* n) const { return _impl->_lexers.has(p, n); }
     bool PluginRegistry::hasParser(const char* p, const char* n) const { return _impl->_parsers.has(p, n); }
-    bool PluginRegistry::hasSimpleVisitor(const char* p, const char* n) const { return _impl->_simple_visitors.has(p, n); }
-    bool PluginRegistry::hasContextualVisitor(const char* p, const char* n) const { return _impl->_contextual_visitors.has(p, n); }
+    bool PluginRegistry::hasVisitor(const char* p, const char* n) const { return _impl->_visitors.has(p, n); }
 
     bool PluginRegistry::hasLexer(const char* n) const { return _impl->_lexers.hasSmart(n); }
     bool PluginRegistry::hasParser(const char* n) const { return _impl->_parsers.hasSmart(n); }
-    bool PluginRegistry::hasSimpleVisitor(const char* n) const { return _impl->_simple_visitors.hasSmart(n); }
-    bool PluginRegistry::hasContextualVisitor(const char* n) const { return _impl->_contextual_visitors.hasSmart(n); }
+    bool PluginRegistry::hasVisitor(const char* n) const { return _impl->_visitors.hasSmart(n); }
 
 } // namespace Synapse

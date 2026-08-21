@@ -5,6 +5,7 @@
 #include "synapse/Module.hpp"
 #include "synapse/interface/ILexer.hpp"
 #include "synapse/interface/IParser.hpp"
+#include "synapse/interface/IVisitor.hpp"
 
 using namespace Synapse;
 
@@ -26,7 +27,12 @@ struct DummyParser : public IParser {
 };
 
 struct DummyVisitor : public IVisitor {
+    Role _role;
+    DummyVisitor(Role r) : _role(r) {}
+
     void destroy() override { delete this; }
+    void setContext(ExecutionContext*) override {};
+    const Role getRole() const override { return _role; }
     Value visit(LiteralNode&) override { return Value(); }
     Value visit(VariableNode&) override { return Value(); }
     Value visit(BinaryNode&) override { return Value(); }
@@ -36,8 +42,8 @@ struct DummyVisitor : public IVisitor {
 
 ILexer*     create_dummy_lexer() { return new DummyLexer(); }
 IParser*    create_dummy_parser() { return new DummyParser(); }
-IVisitor*   create_dummy_simple_visitor() { return new DummyVisitor(); }
-IVisitor* create_dummy_contextual_visitor(ExecutionContext*) { return new DummyVisitor(); }
+IVisitor*   create_dummy_preprocessor(ExecutionContext*) { return new DummyVisitor(IVisitor::Role::Preprocessor); }
+IVisitor*   create_dummy_producer(ExecutionContext*) { return new DummyVisitor(IVisitor::Role::Producer); }
 
 class MockPluginAlpha : public IPlugin {
 public:
@@ -69,8 +75,9 @@ public:
         
         m.lexers.push_back({"CommonLexer", "Beta Common Lexer", &create_dummy_lexer});
         m.lexers.push_back({"UniqueLexer", "Unique Beta Lexer", &create_dummy_lexer});
-        m.simple_visitors.push_back({"MyVisitor", "Test Simple Visitor", &create_dummy_simple_visitor});
-        m.contextual_visitors.push_back({"MyCtxVisitor", "Test Contextual Visitor", &create_dummy_contextual_visitor});
+        
+        m.visitors.push_back({"MyOpt", "Test Preprocessor", IVisitor::Role::Preprocessor, &create_dummy_preprocessor});
+        m.visitors.push_back({"MyEval", "Test Producer", IVisitor::Role::Producer, &create_dummy_producer});
         
         return m;
     }
@@ -111,7 +118,11 @@ protected:
 using PluginRegistryLifecycleTest       = PluginRegistryTest;
 using PluginRegistryExactMatchTest      = PluginRegistryTest;
 using PluginRegistrySmartFallbackTest   = PluginRegistryTest;
-using PluginRegistryContextTest         = PluginRegistryTest;
+using PluginRegistryModuleTest          = PluginRegistryTest;
+
+// -----------------------------
+//      LIFECYCLE & DISCOVERY
+// -----------------------------
 
 TEST_F(PluginRegistryLifecycleTest, LoadsPluginsAndReturnsMetadata) {
     loadAllMocks();
@@ -136,13 +147,16 @@ TEST_F(PluginRegistryLifecycleTest, DiscoveryApiReturnsCorrectTools) {
     EXPECT_TRUE(found_unique);
 }
 
+//  --------------------
+//      EXACT MATCH
+//  --------------------
+
 TEST_F(PluginRegistryExactMatchTest, CreatesToolsWithExactMatch) {
     loadAllMocks();
     
     EXPECT_TRUE(registry.hasLexer("alpha", "CommonLexer"));
     EXPECT_TRUE(registry.hasLexer("beta", "CommonLexer"));
 
-    // Смарт-поінтери самі видалять створені Dummy-об'єкти!
     ILexer::Ptr lex_a = registry.createLexer("alpha", "CommonLexer");
     ILexer::Ptr lex_b = registry.createLexer("beta", "CommonLexer");
 
@@ -155,6 +169,24 @@ TEST_F(PluginRegistryExactMatchTest, ThrowsWhenExactMatchNotFound) {
     EXPECT_FALSE(registry.hasParser("alpha", "UnknownParser"));
     EXPECT_THROW(registry.createParser("alpha", "UnknownParser"), std::runtime_error);
 }
+
+TEST_F(PluginRegistryExactMatchTest, CreatesVisitorsWithExactMatch) {
+    loadAllMocks(); 
+    
+    EXPECT_TRUE(registry.hasVisitor("beta", "MyOpt"));
+    IVisitor::Ptr opt = registry.createVisitor("beta", "MyOpt", nullptr);
+    ASSERT_NE(opt.get(), nullptr);
+    EXPECT_EQ(opt->getRole(), IVisitor::Role::Preprocessor);
+    
+    EXPECT_TRUE(registry.hasVisitor("beta", "MyEval"));
+    IVisitor::Ptr eval = registry.createVisitor("beta", "MyEval", nullptr);
+    ASSERT_NE(eval.get(), nullptr);
+    EXPECT_EQ(eval->getRole(), IVisitor::Role::Producer);
+}
+
+//  ------------------------
+//      SMART FALLBACK
+//  ------------------------
 
 TEST_F(PluginRegistrySmartFallbackTest, SmartSearchResolvesUniqueTools) {
     loadAllMocks();
@@ -184,13 +216,16 @@ TEST_F(PluginRegistrySmartFallbackTest, SmartSearchWorksWithDotNotation) {
     EXPECT_NE(lex.get(), nullptr);
 }
 
-TEST_F(PluginRegistryContextTest, FillsMultipleContextsSafely) {
+//  ------------------------
+//       MODULE FILLING
+//  ------------------------
+
+TEST_F(PluginRegistryModuleTest, FillsModulesCorrectly) {
     registry.loadPlugin(make_plugin(new MockPluginAlpha()));
 
-    Module mod1("mod1");
-    Module mod2("mod2");
+    Module mod1("alpha");
+    Module mod2("alpha");
 
-    // Заповнюємо обидва
     registry.fillModule(mod1, "alpha");
     registry.fillModule(mod2, "alpha");
 
@@ -199,15 +234,16 @@ TEST_F(PluginRegistryContextTest, FillsMultipleContextsSafely) {
     EXPECT_DOUBLE_EQ(mod2.getTable().getVariable("pi").getNumber(), 3.14);
 }
 
-TEST_F(PluginRegistryContextTest, CreatesVisitors) {
-    loadAllMocks(); 
+TEST_F(PluginRegistryModuleTest, ThrowsWhenFillingFromUnknownPlugin) {
+    loadAllMocks();
+    Module mod("ghost");
     
-    EXPECT_TRUE(registry.hasSimpleVisitor("beta", "MyVisitor"));
-    EXPECT_NE(registry.createSimpleVisitor("beta", "MyVisitor").get(), nullptr);
-    
-    EXPECT_TRUE(registry.hasContextualVisitor("beta", "MyCtxVisitor"));
-    EXPECT_NE(registry.createContextualVisitor("beta", "MyCtxVisitor", nullptr).get(), nullptr);
+    EXPECT_THROW(registry.fillModule(mod, "ghost"), std::runtime_error);
 }
+
+//  ----------------
+//      ERRORS      
+//  ----------------
 
 TEST_F(PluginRegistryTest, ThrowsOnDuplicateFactoryInManifest) {
     class BadPlugin : public MockPluginEmpty {

@@ -22,9 +22,9 @@ using PrinterLibManifestTest  = PrinterLibPluginTest;
 using PrinterLibLifecycleTest = PrinterLibPluginTest;
 
 
-//  --------------------
+//  ----------------
 //      Metadata
-//  --------------------
+//  ----------------
 
 TEST_F(PrinterLibMetadataTest, ProvidesCorrectMetadata) {
     ASSERT_NE(plugin.get(), nullptr);
@@ -35,9 +35,9 @@ TEST_F(PrinterLibMetadataTest, ProvidesCorrectMetadata) {
 }
 
 
-//  --------------------
+//  ----------------
 //      Manifest
-//  --------------------
+//  ----------------
 
 TEST_F(PrinterLibManifestTest, ManifestContainsExpectedTools) {
     ASSERT_NE(plugin.get(), nullptr);
@@ -45,27 +45,30 @@ TEST_F(PrinterLibManifestTest, ManifestContainsExpectedTools) {
 
     EXPECT_TRUE(manifest.lexers.empty());
     EXPECT_TRUE(manifest.parsers.empty());
-    EXPECT_TRUE(manifest.contextual_visitors.empty());
     EXPECT_TRUE(manifest.variables.empty());
     EXPECT_TRUE(manifest.functions.empty());
 
-    ASSERT_EQ(manifest.simple_visitors.size(), 2);
+    ASSERT_EQ(manifest.visitors.size(), 2);
 
-    auto ast_printer_decl = manifest.simple_visitors[0];
+    auto ast_printer_decl = manifest.visitors[0];
     EXPECT_STREQ(ast_printer_decl.name, "ASTPrinter");
     EXPECT_STREQ(ast_printer_decl.description, "Prints the AST as a flat LISP-like string");
+    EXPECT_EQ(ast_printer_decl.role, IVisitor::Role::Producer);
     ASSERT_NE(ast_printer_decl.factory, nullptr);
 
-    IVisitor::Ptr flat_printer(ast_printer_decl.factory());
+    IVisitor::Ptr flat_printer(ast_printer_decl.factory(nullptr));
     EXPECT_NE(flat_printer.get(), nullptr);
+    EXPECT_EQ(flat_printer->getRole(), IVisitor::Role::Producer);
 
-    auto tree_printer_decl = manifest.simple_visitors[1];
+    auto tree_printer_decl = manifest.visitors[1];
     EXPECT_STREQ(tree_printer_decl.name, "ASTTreePrinter");
     EXPECT_STREQ(tree_printer_decl.description, "Prints the AST as a beautiful 2D tree");
+    EXPECT_EQ(tree_printer_decl.role, IVisitor::Role::Producer);
     ASSERT_NE(tree_printer_decl.factory, nullptr);
 
-    IVisitor::Ptr tree_printer(tree_printer_decl.factory());
+    IVisitor::Ptr tree_printer(tree_printer_decl.factory(nullptr));
     EXPECT_NE(tree_printer.get(), nullptr);
+    EXPECT_EQ(tree_printer->getRole(), IVisitor::Role::Producer);
 }
 
 

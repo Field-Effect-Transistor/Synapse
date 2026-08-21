@@ -199,7 +199,7 @@ TEST_F(SynapsePluginManagements, LoadsPluginFromFileAndRegistersModule) {
     auto plugins = engine.getLoadedPlugins();
     EXPECT_TRUE(containsPluginName(plugins, "PrinterLib"));
 
-    auto visitors = engine.getAvailableSimpleVisitors();
+    auto visitors = engine.getAvailableVisitors();
     EXPECT_TRUE(containsFullName(visitors, "PrinterLib.ASTPrinter"));
     EXPECT_TRUE(containsFullName(visitors, "PrinterLib.ASTTreePrinter"));
 }
@@ -230,8 +230,7 @@ TEST_F(SynapsePluginManagements, DiscoveryApiReturnsLoadedPluginsAndTools) {
     auto parsers = engine.getAvailableParsers();
     EXPECT_TRUE(containsFullName(parsers, "stdlib.Standard Parser"));
 
-    EXPECT_NO_THROW(engine.getAvailableSimpleVisitors());
-    EXPECT_NO_THROW(engine.getAvailableContextualVisitors());
+    EXPECT_NO_THROW(engine.getAvailableVisitors());
 }
 
 //  --------------------------------

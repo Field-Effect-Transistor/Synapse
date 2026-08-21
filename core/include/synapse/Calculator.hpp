@@ -2,6 +2,7 @@
 #pragma once
 
 #include <string>
+#include <functional>
 
 #include "Vector.hpp"
 #include "Value.hpp"
@@ -22,14 +23,17 @@ namespace Synapse {
             Vector<std::string> optimizers;
         };  //  struct  Recipe
 
+        using RoleWarningCallback = std::function<void(const std::string& message)>;
+
     private:
-        PluginRegistry* _registry = nullptr;
-        Recipe          _recipe;
+        PluginRegistry*     _registry = nullptr;
+        Recipe               _recipe;
+        RoleWarningCallback  _on_role_warning;
 
     public:
         Calculator() = delete;
 
-        Calculator(PluginRegistry* reg, Recipe rec);
+        Calculator(PluginRegistry* reg, Recipe rec, RoleWarningCallback on_role_warning = nullptr);
 
         ~Calculator() = default;
 

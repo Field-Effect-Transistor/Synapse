@@ -30,6 +30,9 @@ namespace Synapse::Internal {
             return *this;
         }
 
+        const Role getRole() const override { return Role::Producer; }
+        void setContext(ExecutionContext* ctx) override;
+
         Value visit(VariableNode& node) override;
         Value visit(LiteralNode& node) override;
         Value visit(UnaryNode& node) override;

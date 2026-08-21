@@ -3,6 +3,7 @@
 #include "IABIObject.hpp"
 
 #include "synapse/Value.hpp"
+#include "synapse/interface/IVisitor.hpp"
 
 #include "UniquePtr.hpp"
 #include "Vector.hpp"
@@ -11,15 +12,13 @@ namespace Synapse {
     struct ICallable;
     struct ILexer;
     struct IParser;
-    struct IVisitor;
     class  ExecutionContext;
 
     struct PluginManifest {
-        using CallableFactory           = ICallable* (*)();
-        using LexerFactory              = ILexer* (*)();
-        using ParserFactory             = IParser* (*)();
-        using SimpleVisitorFactory      = IVisitor* (*)();
-        using ContextualVisitorFactory  = IVisitor* (*)(ExecutionContext*);
+        using CallableFactory   = ICallable* (*)();
+        using LexerFactory      = ILexer* (*)();
+        using ParserFactory     = IParser* (*)();
+        using VisitorFactory    = IVisitor* (*)(ExecutionContext*);
 
         struct VariableDecl {
             const char* name;
@@ -46,25 +45,20 @@ namespace Synapse {
             ParserFactory   factory;
         };  //  struct  ParserDecl
 
-        struct SimpleVisitorDecl {
-            const char*             name;
-            const char*             description;
-            SimpleVisitorFactory    factory;
-        };  //  struct  SimpleVisitorDecl
+        struct VisitorDecl {
+            const char*     name;
+            const char*     description;
+            IVisitor::Role  role;
+            VisitorFactory  factory;
+        };  //  struct  VisitorDecl
 
-        struct ContextualVisitorDecl {
-            const char*                 name;
-            const char*                 description;
-            ContextualVisitorFactory    factory;
-        };  //  struct  ContextualVisitorDecl
 
         Vector<VariableDecl>    variables;
         Vector<FunctionDecl>    functions;
 
-        Vector<LexerDecl>               lexers;
-        Vector<ParserDecl>              parsers;
-        Vector<SimpleVisitorDecl>       simple_visitors;
-        Vector<ContextualVisitorDecl>   contextual_visitors;
+        Vector<LexerDecl>       lexers;
+        Vector<ParserDecl>      parsers;
+        Vector<VisitorDecl>     visitors;
 
     };  //  PluginManifest
 

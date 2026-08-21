@@ -41,8 +41,7 @@ namespace Synapse {
         Vector<PluginInfo> getLoadedPlugins() const;
         Vector<ToolInfo>   getAvailableLexers() const;
         Vector<ToolInfo>   getAvailableParsers() const;
-        Vector<ToolInfo>   getAvailableSimpleVisitors() const;
-        Vector<ToolInfo>   getAvailableContextualVisitors() const;
+        Vector<ToolInfo>   getAvailableVisitors() const;
 
 
         //  ------------------------

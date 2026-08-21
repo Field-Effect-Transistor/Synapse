@@ -80,12 +80,8 @@ namespace Synapse {
         return _impl->_plugin_registry.getAvailableParsers();
     }
 
-    Vector<ToolInfo>   SynapseEngine::getAvailableSimpleVisitors() const {
-        return _impl->_plugin_registry.getAvailableSimpleVisitors();
-    }
-
-    Vector<ToolInfo>   SynapseEngine::getAvailableContextualVisitors() const {
-        return _impl->_plugin_registry.getAvailableContextualVisitors();
+    Vector<ToolInfo>   SynapseEngine::getAvailableVisitors() const {
+        return _impl->_plugin_registry.getAvailableVisitors();
     }
 
 

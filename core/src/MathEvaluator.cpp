@@ -13,6 +13,10 @@ namespace Synapse::Internal {
         delete this;
     }
 
+    void MathEvaluator::setContext(ExecutionContext* ctx) {
+        _context = ctx;
+    }
+
     Value MathEvaluator::visit(VariableNode& node) {
         if (!_context) throw RuntimeError("Evaluation ExecutionContext is null!");
         

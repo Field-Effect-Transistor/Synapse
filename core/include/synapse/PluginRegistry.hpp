@@ -55,31 +55,26 @@ namespace Synapse {
         Vector<PluginInfo> getLoadedPlugins() const;
         Vector<ToolInfo>   getAvailableLexers() const;
         Vector<ToolInfo>   getAvailableParsers() const;
-        Vector<ToolInfo>   getAvailableSimpleVisitors() const;
-        Vector<ToolInfo>   getAvailableContextualVisitors() const;
+        Vector<ToolInfo>   getAvailableVisitors() const;
 
         //  FACTORY API (EXACT)
         ILexer::Ptr     createLexer(const char* plugin_name, const char* lexer_name) const;
         IParser::Ptr    createParser(const char* plugin_name, const char* parser_name) const;
-        IVisitor::Ptr   createSimpleVisitor(const char* plugin_name, const char* visitor_name) const;
-        IVisitor::Ptr   createContextualVisitor(const char* plugin_name, const char* visitor_name, ExecutionContext* ctx) const;
+        IVisitor::Ptr   createVisitor(const char* plugin_name, const char* visitor_name, ExecutionContext* ctx) const;
 
         //  FACTORY API (SMART)
         ILexer::Ptr     createLexer(const char* name) const;
         IParser::Ptr    createParser(const char* name) const;
-        IVisitor::Ptr   createSimpleVisitor(const char* name) const;
-        IVisitor::Ptr   createContextualVisitor(const char* name, ExecutionContext* ctx) const;
+        IVisitor::Ptr   createVisitor(const char* name, ExecutionContext* ctx) const;
 
         //  VALIDATION API
         bool hasLexer(const char* plugin_name, const char* lexer_name) const;
         bool hasParser(const char* plugin_name, const char* parser_name) const;
-        bool hasSimpleVisitor(const char* plugin_name, const char* visitor_name) const;
-        bool hasContextualVisitor(const char* plugin_name, const char* visitor_name) const;
+        bool hasVisitor(const char* plugin_name, const char* visitor_name) const;
 
         bool hasLexer(const char* name) const;
         bool hasParser(const char* name) const;
-        bool hasSimpleVisitor(const char* name) const;
-        bool hasContextualVisitor(const char* name) const;
+        bool hasVisitor(const char* name) const;
 
     };  //  class   PluginRegistry
 }   //  namespace   Synapse

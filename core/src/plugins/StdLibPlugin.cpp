@@ -128,7 +128,7 @@ namespace Synapse::Plugin {
 
             m.lexers.push_back({"Standard Lexer", "", &create_lexer});
             m.parsers.push_back({"Standard Parser", "", &create_parser});
-            m.contextual_visitors.push_back({"Math Evaluator", "Evaluate standard trees", &create_visitor});
+            m.visitors.push_back({"Math Evaluator", "Evaluate standard trees", IVisitor::Role::Producer, &create_visitor});
 
             return m;
         }

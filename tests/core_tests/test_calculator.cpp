@@ -15,8 +15,14 @@ namespace Synapse::Plugin {
 
 namespace {
 
+    //  ------------
+    //      MOCKS
+    //  ------------
+
     struct DummyOptimizer : public IVisitor {
         void destroy() override { delete this; }
+        void setContext(ExecutionContext*) override {};
+        const Role getRole() const override { return Role::Preprocessor; }
         Value visit(LiteralNode&) override { return Value(); }
         Value visit(VariableNode&) override { return Value(); }
         Value visit(BinaryNode&) override { return Value(); }
@@ -24,8 +30,20 @@ namespace {
         Value visit(FunctionNode&) override { return Value(); }
     };  //  struct  DummyOptimizer
     
-    IVisitor* create_dummy_optimizer() { return new DummyOptimizer(); }
+    IVisitor* create_dummy_optimizer(ExecutionContext*) { return new DummyOptimizer(); }
+    struct DummyProducer : public IVisitor {
+        void destroy() override { delete this; }
+        void setContext(ExecutionContext*) override {};
+        const Role getRole() const override { return Role::Producer; }
+        Value visit(LiteralNode&) override { return Value(99.0); }
+        Value visit(VariableNode&) override { return Value(99.0); }
+        Value visit(BinaryNode&) override { return Value(99.0); }
+        Value visit(UnaryNode&) override { return Value(99.0); }
+        Value visit(FunctionNode&) override { return Value(99.0); }
+    };
     
+    IVisitor* create_dummy_producer(ExecutionContext*) { return new DummyProducer(); }
+
     struct DummyParserNull : public IParser {
         void destroy() override { delete this; }
         IASTNode::Ptr parse(const Vector<Token>&) override { return IASTNode::Ptr(nullptr); }
@@ -42,8 +60,10 @@ namespace {
         
         PluginManifest getManifest() const override {
             PluginManifest m;
-            m.simple_visitors.push_back({"DummyOpt", "Does nothing", &create_dummy_optimizer});
             m.parsers.push_back({"NullParser", "Returns null AST", &create_dummy_parser_null});
+            
+            m.visitors.push_back({"DummyOpt", "Does nothing", IVisitor::Role::Preprocessor, &create_dummy_optimizer});
+            m.visitors.push_back({"DummyProducer", "Returns 99", IVisitor::Role::Producer, &create_dummy_producer});
             return m;
         }
     };  //  class   TestHelperPlugin
@@ -159,4 +179,59 @@ TEST_F(CalculatorEvaluateTest, EvaluatesWithLocalVariablesInUserScope) {
 
     Value res = calc.evaluate("max(my_var, 10)", user_scope);
     EXPECT_DOUBLE_EQ(res.getNumber(), 42.0);
+}
+
+//  -----------------------------------
+//      Role Validation (Warnings)
+//  -----------------------------------
+
+TEST_F(CalculatorEvaluateTest, TriggersWarningWhenProducerIsUsedAsOptimizer) {
+    bool warning_triggered = false;
+    std::string warning_message = "";
+
+    auto callback = [&](const std::string& msg) {
+        warning_triggered = true;
+        warning_message = msg;
+    };
+
+    Calculator::Recipe bad_opt_recipe = std_recipe;
+    bad_opt_recipe.optimizers.push_back("helper.DummyProducer");
+
+    Calculator calc(&registry, bad_opt_recipe, callback);
+    calc.evaluate("10 + 20", global_context);
+
+    EXPECT_TRUE(warning_triggered);
+    EXPECT_NE(warning_message.find("has role Producer, but is used as a Preprocessor"), std::string::npos);
+}
+
+TEST_F(CalculatorEvaluateTest, TriggersWarningWhenPreprocessorIsUsedAsEvaluator) {
+    bool warning_triggered = false;
+    std::string warning_message = "";
+
+    auto callback = [&](const std::string& msg) {
+        warning_triggered = true;
+        warning_message = msg;
+    };
+
+    Calculator::Recipe bad_eval_recipe = std_recipe;
+    bad_eval_recipe.evaluator = "helper.DummyOpt";
+
+    Calculator calc(&registry, bad_eval_recipe, callback);
+    calc.evaluate("10 + 20", global_context);
+
+    EXPECT_TRUE(warning_triggered);
+    EXPECT_NE(warning_message.find("has role Preprocessor, but is used as the final evaluator"), std::string::npos);
+}
+
+TEST_F(CalculatorEvaluateTest, NoWarningsForCorrectRoles) {
+    bool warning_triggered = false;
+    auto callback = [&](const std::string&) { warning_triggered = true; };
+
+    Calculator::Recipe good_recipe = std_recipe;
+    good_recipe.optimizers.push_back("helper.DummyOpt");
+
+    Calculator calc(&registry, good_recipe, callback);
+    calc.evaluate("10 + 20", global_context);
+
+    EXPECT_FALSE(warning_triggered);
 }
