@@ -171,9 +171,9 @@ namespace Synapse {
 
         Value result = calc.evaluate(code, _impl->_active_session->context);
 
-        try {
+       if (_impl->_active_session->context->hasLocalVariable("ans")) {
             _impl->_active_session->context->assignVariable("ans", result);
-        } catch (...) {
+        } else {
             _impl->_active_session->context->defineVariable("ans", result);
         }
 

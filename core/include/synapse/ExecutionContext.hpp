@@ -42,6 +42,10 @@ namespace Synapse {
             throw std::runtime_error(std::string("Variable '") + name + "' is not defined!");
         }
 
+        bool hasLocalVariable(const char* name) const {
+            return _local_memory.hasVariable(name);
+        }
+
         ICallable* getFunction(const char* name) const {
             if (_local_memory.hasFunction(name)) {
                 return _local_memory.getFunction(name);
