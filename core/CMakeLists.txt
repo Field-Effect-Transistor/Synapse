@@ -1,16 +1,15 @@
 # /core/src/CMakeLists.txt
 
 add_library(SynapseCore 
-    src/Lexer.cpp 
+    src/Lexer.cpp
     src/Parser.cpp
     src/Value.cpp
     src/Token.cpp
     src/MathEvaluator.cpp
-    src/Context.cpp
-    src/ContextManager.cpp
+    src/SymbolTable.cpp
+    src/EnvironmentManager.cpp
     src/PluginRegistry.cpp
     src/Calculator.cpp
-    src/CalculatorBuilder.cpp
     src/DynamicLibrary.cpp
     src/SynapseEngine.cpp
 

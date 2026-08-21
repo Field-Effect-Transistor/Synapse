@@ -2,12 +2,14 @@
 #include "synapse/PluginRegistry.hpp"
 
 #include "synapse/DynamicLibrary.hpp"
-#include "synapse/Context.hpp"
+#include "synapse/ExecutionContext.hpp"
+#include "synapse/Module.hpp"
 
 #include <cstring>
 #include <algorithm>
 #include <stdexcept>
 #include <unordered_map>
+#include <string>
 
 namespace Synapse {
 
@@ -49,8 +51,7 @@ namespace Synapse {
         Vector<IPlugin::Ptr>    _plugins;
         Vector<PluginInfo>      _plugin_infos;
 
-        Vector<PluginManifest::VariableDecl> _pending_vars;
-        Vector<PluginManifest::FunctionDecl> _pending_funcs;
+        std::unordered_map<std::string, PluginManifest> _manifests;
 
         FactoryRegistry<PluginManifest::LexerFactory>               _lexers;
         FactoryRegistry<PluginManifest::ParserFactory>              _parsers;
@@ -208,24 +209,27 @@ namespace Synapse {
 
         PluginManifest m = plugin->getManifest();
 
-        for (auto& var : m.variables) _impl->_pending_vars.push_back(std::move(var));
-        for (auto& func : m.functions) _impl->_pending_funcs.push_back(std::move(func));
-
         for (auto& lex : m.lexers) _impl->_lexers.push(p_name, lex.name, lex.description, lex.factory);
         for (auto& par : m.parsers) _impl->_parsers.push(p_name, par.name, par.description, par.factory);
         for (auto& vis : m.simple_visitors) _impl->_simple_visitors.push(p_name, vis.name, vis.description, vis.factory);
         for (auto& vis : m.contextual_visitors) _impl->_contextual_visitors.push(p_name, vis.name, vis.description, vis.factory);
 
+        _impl->_manifests[p_name] = std::move(m);
+
         _impl->_plugins.push_back(std::move(plugin));
     }
 
-    void PluginRegistry::fillContext(Context* ctx) {
-        if (!ctx) return;
-        for (const auto& var : _impl->_pending_vars) {
-            ctx->defineVariable(var.name, var.value, var.is_const);
-        }
-        for (const auto& func : _impl->_pending_funcs) {
-            ctx->defineFunction(func.name, ICallable::Ptr(func.function()));
+    void PluginRegistry::fillModule(Module& mod, const char* plugin_name) const {
+        auto it = _impl->_manifests.find(plugin_name);
+        if (it != _impl->_manifests.end()) {
+            for (const auto& var : it->second.variables) {
+                mod.getTable().defineVariable(var.name, var.value, var.is_const);
+            }
+            for (const auto& func : it->second.functions) {
+                mod.getTable().defineFunction(func.name, ICallable::Ptr(func.function()));
+            }
+        } else {
+            throw std::runtime_error(std::string("Cannot fill module: plugin '") + plugin_name + "' is not loaded.");
         }
     }
 
@@ -252,7 +256,7 @@ namespace Synapse {
         if (!f) throw std::runtime_error(std::string("Visitor not found: ") + p + "." + n);
         return IVisitor::Ptr(f());
     }
-    IVisitor::Ptr PluginRegistry::createContextualVisitor(const char* p, const char* n, Context* ctx) const {
+    IVisitor::Ptr PluginRegistry::createContextualVisitor(const char* p, const char* n, ExecutionContext* ctx) const {
         auto f = _impl->_contextual_visitors.find(p, n).factory;
         if (!f) throw std::runtime_error(std::string("Contextual Visitor not found: ") + p + "." + n);
         return IVisitor::Ptr(f(ctx));
@@ -274,7 +278,7 @@ namespace Synapse {
         if (!f) throw std::runtime_error(std::string("Visitor not found: ") + n);
         return IVisitor::Ptr(f());
     }
-    IVisitor::Ptr PluginRegistry::createContextualVisitor(const char* n, Context* ctx) const {
+    IVisitor::Ptr PluginRegistry::createContextualVisitor(const char* n, ExecutionContext* ctx) const {
         auto f = _impl->_contextual_visitors.findSmart(n).factory;
         if (!f) throw std::runtime_error(std::string("Contextual Visitor not found: ") + n);
         return IVisitor::Ptr(f(ctx));

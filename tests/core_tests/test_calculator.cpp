@@ -1,86 +1,162 @@
-// /tests/core_tests/test_calculator.cpp
+//  /tests/core_tests/test_calculator.cpp
 #include <gtest/gtest.h>
 
 #include "synapse/Calculator.hpp"
-#include "synapse/CalculatorBuilder.hpp"
 #include "synapse/PluginRegistry.hpp"
-#include "synapse/ContextManager.hpp"
-#include "synapse/Context.hpp"
+#include "synapse/ExecutionContext.hpp"
+#include "synapse/EnvironmentManager.hpp"
+#include "synapse/Module.hpp"
 
 using namespace Synapse;
 
 namespace Synapse::Plugin {
     extern "C" IPlugin* create_stdlib_plugin();
-}
+}   //  namespace   Synapse::Plugin
+
+namespace {
+
+    struct DummyOptimizer : public IVisitor {
+        void destroy() override { delete this; }
+        Value visit(LiteralNode&) override { return Value(); }
+        Value visit(VariableNode&) override { return Value(); }
+        Value visit(BinaryNode&) override { return Value(); }
+        Value visit(UnaryNode&) override { return Value(); }
+        Value visit(FunctionNode&) override { return Value(); }
+    };  //  struct  DummyOptimizer
+    
+    IVisitor* create_dummy_optimizer() { return new DummyOptimizer(); }
+    
+    struct DummyParserNull : public IParser {
+        void destroy() override { delete this; }
+        IASTNode::Ptr parse(const Vector<Token>&) override { return IASTNode::Ptr(nullptr); }
+    };  //  struct  DummyParserNull
+    
+    IParser* create_dummy_parser_null() { return new DummyParserNull(); }
+
+    class TestHelperPlugin : public IPlugin {
+    public:
+        void destroy() override { delete this; }
+        const char* getName() const override { return "helper"; }
+        const char* getVersion() const override { return "1.0"; }
+        const char* getDescription() const override { return "Helper Plugin"; }
+        
+        PluginManifest getManifest() const override {
+            PluginManifest m;
+            m.simple_visitors.push_back({"DummyOpt", "Does nothing", &create_dummy_optimizer});
+            m.parsers.push_back({"NullParser", "Returns null AST", &create_dummy_parser_null});
+            return m;
+        }
+    };  //  class   TestHelperPlugin
+
+}   //  namespace
 
 class CalculatorIntegrationTest : public ::testing::Test {
 protected:
     PluginRegistry registry;
-    ContextManager context_manager;
-    Context* global_context;
+    EnvironmentManager env_manager;
+    ExecutionContext* global_context;
+    
+    Calculator::Recipe std_recipe;
 
     void SetUp() override {
-        global_context = context_manager.getGlobalScope();
+        global_context = env_manager.createSessionContext();
         
         IPlugin::Ptr stdlib(Plugin::create_stdlib_plugin());
         registry.loadPlugin(std::move(stdlib));
         
-        registry.fillContext(global_context);
+        registry.loadPlugin(IPlugin::Ptr(new TestHelperPlugin()));
+
+        Module* mod = env_manager.createPluginModule("stdlib");
+        registry.fillModule(*mod, "stdlib");
+        global_context->importModule(mod);
+        
+        std_recipe = {
+            "stdlib.Standard Lexer",
+            "stdlib.Standard Parser",
+            "stdlib.Math Evaluator"
+        };
     }
-};
+};  //  class   CalculatorIntegrationTest
 
-TEST_F(CalculatorIntegrationTest, BuilderThrowsOnMissingLexer) {
-    CalculatorBuilder builder(&registry);
-    builder.useParser("stdlib.Standard Parser")
-           .useEvaluator("stdlib.Math Evaluator");
+using CalculatorInitTest        = CalculatorIntegrationTest;
+using CalculatorEvaluateTest    = CalculatorIntegrationTest;
 
-    EXPECT_THROW(builder.build(), std::runtime_error);
+//  ------------------------
+//      Initialization
+//  ------------------------
+
+TEST_F(CalculatorInitTest, ConstructorThrowsWhenRegistryIsNull) {
+    EXPECT_THROW(Calculator(nullptr, std_recipe), std::runtime_error);
 }
 
-TEST_F(CalculatorIntegrationTest, BuilderCreatesValidCalculator) {
-    CalculatorBuilder builder(&registry);
-    builder.useLexer("stdlib.Standard Lexer")
-           .useParser("stdlib.Standard Parser")
-           .useEvaluator("stdlib.Math Evaluator");
+TEST_F(CalculatorInitTest, ConstructorThrowsOnIncompleteRecipe) {
+    Calculator::Recipe missing_lexer   = {"", "stdlib.Standard Parser", "stdlib.Math Evaluator"};
+    Calculator::Recipe missing_parser  = {"stdlib.Standard Lexer", "", "stdlib.Math Evaluator"};
+    Calculator::Recipe missing_eval    = {"stdlib.Standard Lexer", "stdlib.Standard Parser", ""};
 
-    Calculator calc = builder.build(); 
+    EXPECT_THROW(Calculator(&registry, missing_lexer), std::runtime_error);
+    EXPECT_THROW(Calculator(&registry, missing_parser), std::runtime_error);
+    EXPECT_THROW(Calculator(&registry, missing_eval), std::runtime_error);
 }
 
-TEST_F(CalculatorIntegrationTest, EvaluatesComplexMathematicalExpression) {
-    // Збираємо калькулятор
-    Calculator calc = CalculatorBuilder(&registry)
-        .useLexer("stdlib.Standard Lexer")
-        .useParser("stdlib.Standard Parser")
-        .useEvaluator("stdlib.Math Evaluator")
-        .build();
+TEST_F(CalculatorInitTest, ConstructorCreatesValidCalculator) {
+    EXPECT_NO_THROW({
+        Calculator calc(&registry, std_recipe);
+    });
+}
 
-    // 1. Базова математика
+//  --------------------
+//      Evaluation
+//  --------------------
+
+TEST_F(CalculatorEvaluateTest, EvaluatesThrowsWhenContextMissing) {
+    Calculator calc(&registry, std_recipe);
+    EXPECT_THROW(calc.evaluate("1 + 1", nullptr), std::runtime_error);
+}
+
+TEST_F(CalculatorEvaluateTest, ReturnsZeroWhenAstIsNull) {
+    Calculator::Recipe null_ast_recipe = {
+        "stdlib.Standard Lexer",
+        "helper.NullParser",
+        "stdlib.Math Evaluator"
+    };
+    
+    Calculator calc(&registry, null_ast_recipe);
+    Value res = calc.evaluate("10 + 20", global_context);
+    EXPECT_DOUBLE_EQ(res.getNumber(), 0.0);
+}
+
+TEST_F(CalculatorEvaluateTest, RunsOptimizers) {
+    Calculator::Recipe opt_recipe = std_recipe;
+    opt_recipe.optimizers.push_back("helper.DummyOpt");
+
+    Calculator calc(&registry, opt_recipe);
+
+    Value res = calc.evaluate("10 + 20", global_context);
+    EXPECT_DOUBLE_EQ(res.getNumber(), 30.0);
+}
+
+TEST_F(CalculatorEvaluateTest, EvaluatesComplexMathematicalExpression) {
+    Calculator calc(&registry, std_recipe);
+
     Value res1 = calc.evaluate("10 + 2 * 5", global_context);
     EXPECT_TRUE(res1.isNumber());
     EXPECT_DOUBLE_EQ(res1.getNumber(), 20.0);
 
-    // 2. Використання констант з плагіна (pi)
     Value res2 = calc.evaluate("pi * 2", global_context);
     EXPECT_DOUBLE_EQ(res2.getNumber(), 6.283185307179586);
 
-    // 3. Використання функцій з плагіна (max, sin)
     Value res3 = calc.evaluate("max(10, 20) + sin(0)", global_context);
     EXPECT_DOUBLE_EQ(res3.getNumber(), 20.0);
 }
 
-TEST_F(CalculatorIntegrationTest, EvaluatesWithLocalVariablesInUserScope) {
-    // Створюємо "Користувацький" Scope, батьком якого є Global
-    Context* user_scope = context_manager.createScope(global_context);
+TEST_F(CalculatorEvaluateTest, EvaluatesWithLocalVariablesInUserScope) {
+    ExecutionContext* user_scope = env_manager.createSessionContext();
+    user_scope->importModule(env_manager.getPluginModule("stdlib"));
     user_scope->defineVariable("my_var", Value(42.0));
 
-    // Створюємо Калькулятор, який працює ТІЛЬКИ в User Scope
-    Calculator calc = CalculatorBuilder(&registry)
-        .useLexer("stdlib.Standard Lexer")
-        .useParser("stdlib.Standard Parser")
-        .useEvaluator("stdlib.Math Evaluator")
-        .build();
+    Calculator calc(&registry, std_recipe);
 
-    // Перевіряємо, чи калькулятор бачить і локальну змінну, і глобальну функцію
     Value res = calc.evaluate("max(my_var, 10)", user_scope);
     EXPECT_DOUBLE_EQ(res.getNumber(), 42.0);
 }

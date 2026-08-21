@@ -1,58 +1,68 @@
-//  /core/src/SynapseEngine
+// /core/src/SynapseEngine.cpp
 #include "synapse/SynapseEngine.hpp"
 
-#include "synapse/ContextManager.hpp"
-#include "synapse/Context.hpp"
+#include "synapse/ExecutionContext.hpp"
+#include "synapse/EnvironmentManager.hpp"
+#include "synapse/Module.hpp"
 
 #include <string>
-#include <Vector.hpp>
+#include <stdexcept>
 #include <unordered_map>
+#include "Vector.hpp"
 
 namespace Synapse {
 
     struct SynapseEngine::Impl {
-
         struct Session {
             std::string         name;
             Calculator::Recipe  recipe;
-            Context*            context = nullptr;
-        };  //  struct Session
+            ExecutionContext*   context = nullptr;
+        };
 
         std::unordered_map<std::string, Session> _sessions;
         Session*    _active_session = nullptr;
         
-        PluginRegistry  _plugin_registry;
-        ContextManager  _context_manager;
-
-    };  //  struct  SynapseEngine::Impl
+        PluginRegistry      _plugin_registry;
+        EnvironmentManager  _env_manager;
+    };
     
     SynapseEngine::SynapseEngine() : _impl(new Impl) {};
     SynapseEngine::~SynapseEngine() = default;
-
     SynapseEngine::SynapseEngine(SynapseEngine&&) = default;
     SynapseEngine& SynapseEngine::operator=(SynapseEngine&&) = default;
-
 
     //  ----------------
     //      PLUGINS
     //  ----------------
 
     void SynapseEngine::loadPlugin(IPlugin::Ptr&& plugin) {
+        std::string name = plugin->getName();
+        
         _impl->_plugin_registry.loadPlugin(std::move(plugin));
+        
+        Module* mod = _impl->_env_manager.createPluginModule(name.c_str());
+        _impl->_plugin_registry.fillModule(*mod, name.c_str());
     }
 
     void SynapseEngine::loadPluginFromFile(const char* path) {
+        size_t plugins_before = _impl->_plugin_registry.getLoadedPlugins().size();
         _impl->_plugin_registry.loadFromFile(path);
+        
+        auto plugins = _impl->_plugin_registry.getLoadedPlugins();
+        for (size_t i = plugins_before; i < plugins.size(); ++i) {
+            std::string name = plugins[i].name;
+            Module* mod = _impl->_env_manager.createPluginModule(name.c_str());
+            _impl->_plugin_registry.fillModule(*mod, name.c_str());
+        }
     }
 
     void SynapseEngine::defineGlobalVariable(const char* name, Value val, bool is_const) {
-        _impl->_context_manager.getGlobalScope()->defineVariable(name, val, is_const);
+        _impl->_env_manager.getGlobalModule()->getTable().defineVariable(name, std::move(val), is_const);
     }
 
     void SynapseEngine::defineGlobalFunction(const char* name, ICallable::Ptr&& func) {
-        _impl->_context_manager.getGlobalScope()->defineFunction(name, std::move(func));
+        _impl->_env_manager.getGlobalModule()->getTable().defineFunction(name, std::move(func));
     }
-
 
     //  --------------------
     //      DISCOVERY API
@@ -89,8 +99,19 @@ namespace Synapse {
             throw std::runtime_error("Session '" + name + "' already exists!");
         }
 
-        Context* session_ctx = _impl->_context_manager.createScope(_impl->_context_manager.getGlobalScope());
+        // 1. Делегуємо створення сесії Менеджеру
+        ExecutionContext* session_ctx = _impl->_env_manager.createSessionContext();
+        
+        // 2. Підключаємо Глобальний модуль
+        session_ctx->importModule(_impl->_env_manager.getGlobalModule());
+        
+        // 3. Підключаємо всі завантажені плагіни
+        auto plugins = _impl->_plugin_registry.getLoadedPlugins();
+        for (const auto& p : plugins) {
+            session_ctx->importModule(_impl->_env_manager.getPluginModule(p.name.c_str()));
+        }
 
+        // 4. Зберігаємо сесію (тільки сирий вказівник)
         _impl->_sessions[name] = Impl::Session{name, recipe, session_ctx};
 
         if (!_impl->_active_session) {
@@ -122,6 +143,8 @@ namespace Synapse {
             _impl->_active_session = nullptr;
         }
 
+        _impl->_env_manager.deleteSessionContext(it->second.context);
+        
         _impl->_sessions.erase(it);
     }
 
@@ -175,5 +198,5 @@ namespace Synapse {
 
         return calc.evaluate(code, _impl->_active_session->context);
     }
+    
 }   //  namespace   Synapse
-

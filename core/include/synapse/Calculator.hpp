@@ -9,8 +9,8 @@
 namespace Synapse {
 
     //  FWD DECL
-    class   PluginRegistry;
-    class   Context;
+    class PluginRegistry;
+    class ExecutionContext;
 
     class Calculator {
     public:
@@ -27,11 +27,9 @@ namespace Synapse {
         Recipe          _recipe;
 
     public:
-        Calculator() = default;
-        Calculator(
-            PluginRegistry* reg,
-            Recipe          rec
-        ) : _registry(reg), _recipe(rec) {};
+        Calculator() = delete;
+
+        Calculator(PluginRegistry* reg, Recipe rec);
 
         ~Calculator() = default;
 
@@ -41,7 +39,7 @@ namespace Synapse {
         Calculator(Calculator&& calc) = default;
         Calculator& operator=(Calculator&& calc) = default;
 
-        Value evaluate(const std::string& code, Context* execution_context);
+        Value evaluate(const std::string& code, ExecutionContext* execution_context);
 
     };  //  class   Calculator
 

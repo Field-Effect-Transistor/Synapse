@@ -12,14 +12,14 @@ namespace Synapse {
     struct ILexer;
     struct IParser;
     struct IVisitor;
-    class  Context;
+    class  ExecutionContext;
 
     struct PluginManifest {
         using CallableFactory           = ICallable* (*)();
         using LexerFactory              = ILexer* (*)();
         using ParserFactory             = IParser* (*)();
         using SimpleVisitorFactory      = IVisitor* (*)();
-        using ContextualVisitorFactory  = IVisitor* (*)(Context*);
+        using ContextualVisitorFactory  = IVisitor* (*)(ExecutionContext*);
 
         struct VariableDecl {
             const char* name;

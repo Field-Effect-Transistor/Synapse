@@ -2,7 +2,7 @@
 #include "synapse/Calculator.hpp"
 
 #include "synapse/PluginRegistry.hpp"
-#include "synapse/Context.hpp"
+#include "synapse/ExecutionContext.hpp"
 #include "synapse/StreamReader.hpp"
 
 #include "UniquePtr.hpp"
@@ -11,9 +11,18 @@
 
 namespace Synapse {
 
-    Value Calculator::evaluate(const std::string& code, Context* execution_context) {   
+    Calculator::Calculator(PluginRegistry* reg, Recipe rec) 
+        : _registry(reg), _recipe(std::move(rec)) 
+    {
         if (!_registry) throw std::runtime_error("Calculator: PluginRegistry is missing!");
-        if (!execution_context) throw std::runtime_error("Calculator: Execution Context is missing!");
+        if (_recipe.lexer.empty()) throw std::runtime_error("Calculator: Lexer is missing in recipe!");
+        if (_recipe.parser.empty()) throw std::runtime_error("Calculator: Parser is missing in recipe!");
+        if (_recipe.evaluator.empty()) throw std::runtime_error("Calculator: Evaluator is missing in recipe!");
+    }
+
+    Value Calculator::evaluate(const std::string& code, ExecutionContext* execution_context) {   
+        if (!_registry) throw std::runtime_error("Calculator: PluginRegistry is missing!");
+        if (!execution_context) throw std::runtime_error("Calculator: Execution ExecutionContext is missing!");
 
         std::istringstream code_stream(code);
         StreamReader reader(code_stream);

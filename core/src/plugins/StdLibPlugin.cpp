@@ -1,6 +1,7 @@
 //  /core/src/plugins/StdLibPlugin.cpp
 #include "synapse/interface/IPlugin.hpp"
 #include "synapse/Callable.hpp"
+#include "synapse/ExecutionContext.hpp"
 
 #include "internal/Lexer.hpp"
 #include "internal/Parser.hpp"
@@ -84,7 +85,7 @@ namespace Synapse::Plugin {
 
     ILexer*     create_lexer() { return new Internal::Lexer(); }
     IParser*    create_parser() { return new Internal::Parser(); }
-    IVisitor*   create_visitor(Context* ctx) { return new Internal::MathEvaluator(ctx); }
+    IVisitor*   create_visitor(ExecutionContext* ctx) { return new Internal::MathEvaluator(ctx); }
 
 
     class StdLibPlugin final : public IPlugin {

@@ -5,15 +5,15 @@
 #include "synapse/ASTNode.hpp"
 
 namespace Synapse {
-    class Context;
+    class ExecutionContext;
 }   //  namespace   Synapse
 
 namespace Synapse::Internal {
 
     class MathEvaluator final : public IVisitor {
-        Context* _context = nullptr;
+        ExecutionContext* _context = nullptr;
     public:
-        MathEvaluator(Context* ctx) : _context(ctx) {}
+        MathEvaluator(ExecutionContext* ctx) : _context(ctx) {}
         ~MathEvaluator() = default;
         void destroy() override;
 

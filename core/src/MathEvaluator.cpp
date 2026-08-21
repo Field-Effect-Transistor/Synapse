@@ -2,7 +2,7 @@
 #include "internal/MathEvaluator.hpp"
 
 #include "synapse/Exceptions.hpp"
-#include "synapse/Context.hpp"
+#include "synapse/ExecutionContext.hpp"
 
 #include <string>
 #include <cmath>
@@ -14,7 +14,7 @@ namespace Synapse::Internal {
     }
 
     Value MathEvaluator::visit(VariableNode& node) {
-        if (!_context) throw RuntimeError("Evaluation Context is null!");
+        if (!_context) throw RuntimeError("Evaluation ExecutionContext is null!");
         
         return _context->getVariable(node._token.lexeme.c_str());
     }
@@ -91,7 +91,7 @@ namespace Synapse::Internal {
     }
 
     Value MathEvaluator::visit(FunctionNode& node) {
-        if (!_context) throw RuntimeError("Evaluation Context is null!");
+        if (!_context) throw RuntimeError("Evaluation ExecutionContext is null!");
 
         ICallable* func = _context->getFunction(node._token.lexeme.c_str());
 

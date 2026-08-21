@@ -11,7 +11,8 @@
 
 namespace Synapse {
 
-    class Context;
+    class ExecutionContext;
+    class Module;
 
     //  DISCOVERY API STRUCTURES
     struct PluginInfo {
@@ -48,7 +49,7 @@ namespace Synapse {
 
         //  LIFECYCLE
         void loadPlugin(IPlugin::Ptr plugin);
-        void fillContext(Context* ctx);
+        void fillModule(Module& mod, const char* plugin_name) const;
 
         //  DISCOVERY API
         Vector<PluginInfo> getLoadedPlugins() const;
@@ -61,13 +62,13 @@ namespace Synapse {
         ILexer::Ptr     createLexer(const char* plugin_name, const char* lexer_name) const;
         IParser::Ptr    createParser(const char* plugin_name, const char* parser_name) const;
         IVisitor::Ptr   createSimpleVisitor(const char* plugin_name, const char* visitor_name) const;
-        IVisitor::Ptr   createContextualVisitor(const char* plugin_name, const char* visitor_name, Context* ctx) const;
+        IVisitor::Ptr   createContextualVisitor(const char* plugin_name, const char* visitor_name, ExecutionContext* ctx) const;
 
         //  FACTORY API (SMART)
         ILexer::Ptr     createLexer(const char* name) const;
         IParser::Ptr    createParser(const char* name) const;
         IVisitor::Ptr   createSimpleVisitor(const char* name) const;
-        IVisitor::Ptr   createContextualVisitor(const char* name, Context* ctx) const;
+        IVisitor::Ptr   createContextualVisitor(const char* name, ExecutionContext* ctx) const;
 
         //  VALIDATION API
         bool hasLexer(const char* plugin_name, const char* lexer_name) const;

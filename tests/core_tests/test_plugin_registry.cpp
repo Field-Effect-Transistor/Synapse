@@ -1,16 +1,16 @@
 //  /tests/core_tests/test_plugin_registry.cpp
 #include <gtest/gtest.h>
 #include "synapse/PluginRegistry.hpp"
-#include "synapse/ContextManager.hpp"
-#include "synapse/Context.hpp"
+#include "synapse/ExecutionContext.hpp"
+#include "synapse/Module.hpp"
 #include "synapse/interface/ILexer.hpp"
 #include "synapse/interface/IParser.hpp"
 
 using namespace Synapse;
 
-// =================
+// ----------------
 //      MOCKS
-// =================
+// ----------------
 
 struct DummyLexer : public ILexer {
     void destroy() override { delete this; }
@@ -37,7 +37,7 @@ struct DummyVisitor : public IVisitor {
 ILexer*     create_dummy_lexer() { return new DummyLexer(); }
 IParser*    create_dummy_parser() { return new DummyParser(); }
 IVisitor*   create_dummy_simple_visitor() { return new DummyVisitor(); }
-IVisitor*   create_dummy_contextual_visitor(Context*) { return new DummyVisitor(); }
+IVisitor* create_dummy_contextual_visitor(ExecutionContext*) { return new DummyVisitor(); }
 
 class MockPluginAlpha : public IPlugin {
 public:
@@ -93,9 +93,9 @@ IPlugin::Ptr make_plugin(IPlugin* p) {
 }
 
 
-// =================
+// ----------------
 //      TESTS
-// =================
+// ----------------
 
 class PluginRegistryTest : public ::testing::Test {
 protected:
@@ -187,28 +187,16 @@ TEST_F(PluginRegistrySmartFallbackTest, SmartSearchWorksWithDotNotation) {
 TEST_F(PluginRegistryContextTest, FillsMultipleContextsSafely) {
     registry.loadPlugin(make_plugin(new MockPluginAlpha()));
 
-    ContextManager manager;
-    Context* ctx1 = manager.createScope();
-    Context* ctx2 = manager.createScope();
+    Module mod1("mod1");
+    Module mod2("mod2");
 
     // Заповнюємо обидва
-    registry.fillContext(ctx1);
-    registry.fillContext(ctx2);
+    registry.fillModule(mod1, "alpha");
+    registry.fillModule(mod2, "alpha");
 
     // Обидва мають отримати свої копії 'pi'
-    EXPECT_DOUBLE_EQ(ctx1->getVariable("pi").getNumber(), 3.14);
-    EXPECT_DOUBLE_EQ(ctx2->getVariable("pi").getNumber(), 3.14);
-}
-
-TEST_F(PluginRegistryContextTest, ThrowsOnVariableCollisionDuringFill) {
-    // Вантажимо обидва плагіни (в обох є змінна "pi")
-    loadAllMocks();
-
-    ContextManager manager;
-    Context* ctx = manager.createScope();
-
-    // Спроба заповнити контекст має впасти, бо Context забороняє перезапис змінних в одному Scope
-    EXPECT_THROW(registry.fillContext(ctx), std::runtime_error);
+    EXPECT_DOUBLE_EQ(mod1.getTable().getVariable("pi").getNumber(), 3.14);
+    EXPECT_DOUBLE_EQ(mod2.getTable().getVariable("pi").getNumber(), 3.14);
 }
 
 TEST_F(PluginRegistryContextTest, CreatesVisitors) {
