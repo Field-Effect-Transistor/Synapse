@@ -57,6 +57,8 @@ namespace Synapse {
         Vector<ToolInfo>   getAvailableParsers() const;
         Vector<ToolInfo>   getAvailableVisitors() const;
 
+        const PluginManifest& getPluginManifest(const char* plugin_name) const;
+
         //  FACTORY API (EXACT)
         ILexer::Ptr     createLexer(const char* plugin_name, const char* lexer_name) const;
         IParser::Ptr    createParser(const char* plugin_name, const char* parser_name) const;

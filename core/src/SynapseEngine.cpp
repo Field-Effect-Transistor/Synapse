@@ -1,7 +1,6 @@
 // /core/src/SynapseEngine.cpp
 #include "synapse/SynapseEngine.hpp"
 
-#include "synapse/ExecutionContext.hpp"
 #include "synapse/EnvironmentManager.hpp"
 #include "synapse/Module.hpp"
 
@@ -84,6 +83,19 @@ namespace Synapse {
         return _impl->_plugin_registry.getAvailableVisitors();
     }
 
+    void SynapseEngine::enumerateActiveSessionVariables(VariableCallback callback) const {
+        if (!_impl->_active_session) throw std::runtime_error("No active session");
+        _impl->_active_session->context->enumerateVariables(std::move(callback));
+    }
+
+    void SynapseEngine::enumerateActiveSessionFunctions(FunctionCallback callback) const {
+        if (!_impl->_active_session) throw std::runtime_error("No active session");
+        _impl->_active_session->context->enumerateFunctions(std::move(callback));
+    }
+
+    const PluginManifest& SynapseEngine::getPluginManifest(const char* plugin_name) const {
+        return _impl->_plugin_registry.getPluginManifest(plugin_name);
+    }
 
     //  ------------------------
     //      SESSION CONTROL
@@ -155,6 +167,13 @@ namespace Synapse {
             names.push_back(pair.first);
         }
         return names;
+    }
+
+    const Calculator::Recipe& SynapseEngine::getActiveSessionRecipe() const {
+        if (!_impl->_active_session) {
+            throw std::runtime_error("No active session! Cannot get recipe.");
+        }
+        return _impl->_active_session->recipe;
     }
 
 

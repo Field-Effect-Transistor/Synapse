@@ -3,11 +3,30 @@
 
 #include "synapse/SymbolTable.hpp"
 #include "synapse/Module.hpp"
+
+#include <functional>
+
 #include "Vector.hpp"
 
 namespace Synapse {
 
     class ExecutionContext final {
+    public:
+        struct VariableMeta {
+            std::string name;
+            Value       value;
+            std::string source;
+        };  //  struct  VariableMeta
+
+        struct FunctionMeta {
+            std::string name;
+            size_t      arity;
+            std::string source;
+        };  //  struct  FunctionMeta
+
+        using VariableCallback = std::function<void(const VariableMeta&)>;
+        using FunctionCallback = std::function<void(const FunctionMeta&)>;
+
     private:
         SymbolTable             _local_memory;
         Vector<const Module*>   _imports;
@@ -15,51 +34,17 @@ namespace Synapse {
     public:
         ExecutionContext() = default;
 
-        void importModule(const Module* mod) {
-            if (mod) _imports.push_back(mod);
-        }
+        void importModule(const Module* mod);
 
-        void defineVariable(const char* name, Value val, bool is_const = false) {
-            _local_memory.defineVariable(name, std::move(val), is_const);
-        }
+        void defineVariable(const char* name, Value val, bool is_const = false);
+        void assignVariable(const char* name, Value val);
+        Value getVariable(const char* name) const;
+        bool hasLocalVariable(const char* name) const;
 
-        void assignVariable(const char* name, Value val) {
-            _local_memory.assignVariable(name, std::move(val));
-        }
+        ICallable* getFunction(const char* name) const;
 
-        Value getVariable(const char* name) const {
-            if (_local_memory.hasVariable(name)) {
-                return _local_memory.getVariable(name);
-            }
-
-            for (auto it = _imports.size(); it > 0; --it) {
-                const Module* mod = _imports[it - 1];
-                if (mod->getTable().hasVariable(name)) {
-                    return mod->getTable().getVariable(name);
-                }
-            }
-
-            throw std::runtime_error(std::string("Variable '") + name + "' is not defined!");
-        }
-
-        bool hasLocalVariable(const char* name) const {
-            return _local_memory.hasVariable(name);
-        }
-
-        ICallable* getFunction(const char* name) const {
-            if (_local_memory.hasFunction(name)) {
-                return _local_memory.getFunction(name);
-            }
-
-            for (auto it = _imports.size(); it > 0; --it) {
-                const Module* mod = _imports[it - 1];
-                if (mod->getTable().hasFunction(name)) {
-                    return mod->getTable().getFunction(name);
-                }
-            }
-
-            throw std::runtime_error(std::string("Function '") + name + "' is not defined!");
-        }
+        void enumerateVariables(VariableCallback) const;
+        void enumerateFunctions(FunctionCallback) const;
 
     };  //  class   ExecutionContext
 

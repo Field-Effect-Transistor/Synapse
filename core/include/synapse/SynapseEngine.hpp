@@ -3,6 +3,7 @@
 
 #include "synapse/Calculator.hpp"
 #include "synapse/PluginRegistry.hpp"
+#include "ExecutionContext.hpp"
 
 #include "synapse/interface/IPlugin.hpp"
 #include "synapse/interface/ICallable.hpp"
@@ -10,6 +11,11 @@
 namespace Synapse {
 
     class SynapseEngine final {
+    public:
+        using VariableCallback = ExecutionContext::VariableCallback;
+        using FunctionCallback = ExecutionContext::FunctionCallback;
+
+    private:
         struct Impl;
         UniquePtr<Impl> _impl;
 
@@ -43,6 +49,10 @@ namespace Synapse {
         Vector<ToolInfo>   getAvailableParsers() const;
         Vector<ToolInfo>   getAvailableVisitors() const;
 
+        void enumerateActiveSessionVariables(VariableCallback callback) const;
+        void enumerateActiveSessionFunctions(FunctionCallback callback) const;
+
+        const PluginManifest& getPluginManifest(const char* plugin_name) const;
 
         //  ------------------------
         //      SESSION CONTROL
@@ -55,6 +65,8 @@ namespace Synapse {
 
         const char* getActiveSessionName() const;
         Vector<std::string> getAvailableSessions() const;
+
+        const Calculator::Recipe& getActiveSessionRecipe() const;
 
 
         //  ----------------

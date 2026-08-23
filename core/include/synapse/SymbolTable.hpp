@@ -4,12 +4,29 @@
 #include "synapse/Value.hpp"
 #include "synapse/interface/ICallable.hpp"
 
+#include <functional>
+#include <string_view>
+
 #include "UniquePtr.hpp"
 
 namespace Synapse {
 
-    class   SymbolTable {
+    class   SymbolTable final {
+    public:
+        struct VariableInfo {
+            std::string_view    name;
+            const Value*        value;
+        };  //  struct  VariableInfo
 
+        struct FunctionInfo {
+            std::string_view    name;
+            size_t              arity;
+        };  //  struct  FunctionInfo
+
+        using VariableCallback = std::function<void(const VariableInfo&)>;
+        using FunctionCallback = std::function<void(const FunctionInfo&)>;
+        
+    private:
         struct Impl;
         UniquePtr<Impl> _impl;
 
@@ -33,7 +50,9 @@ namespace Synapse {
         bool hasVariable(const char* name) const;
         bool hasFunction(const char* name) const;
         
-
+        void enumerateVariables(VariableCallback) const;
+        void enumerateFunctions(FunctionCallback) const;
+        
     };  //  class   SymbolTable
 
 }   //  namespace   Synapse

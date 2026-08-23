@@ -73,4 +73,16 @@ namespace Synapse {
         throw std::runtime_error("Function '" + key + "' is not defined!");
     }
 
+    void SymbolTable::enumerateVariables(VariableCallback callback) const {
+        for (const auto& it : _impl->_variables) {
+            callback({it.first, &it.second});
+        }
+    }
+
+    void SymbolTable::enumerateFunctions(FunctionCallback callback) const {
+        for (const auto& it: _impl->_functions) {
+            callback({it.first, it.second->arity()});
+        }
+    }
+
 }   //  namespace   Synapse

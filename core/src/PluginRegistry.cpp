@@ -237,6 +237,14 @@ namespace Synapse {
     Vector<ToolInfo> PluginRegistry::getAvailableParsers() const { return _impl->_parsers.getAvailableTools(); }
     Vector<ToolInfo> PluginRegistry::getAvailableVisitors() const { return _impl->_visitors.getAvailableTools(); }
 
+    const PluginManifest& PluginRegistry::getPluginManifest(const char* plugin_name) const {
+        auto it = _impl->_manifests.find(plugin_name);
+        if (it != _impl->_manifests.end()) {
+            return it->second;
+        }
+        throw std::runtime_error(std::string("Plugin '") + plugin_name + "' manifest not found!");
+    }
+
     //  FACTORY API (Exact)
     ILexer::Ptr PluginRegistry::createLexer(const char* p, const char* n) const {
         auto f = _impl->_lexers.find(p, n).factory;
