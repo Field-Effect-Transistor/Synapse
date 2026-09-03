@@ -18,17 +18,17 @@ namespace Synapse {
         struct Recipe {
             std::string lexer;
             std::string parser;
-            std::string evaluator;
+            std::string producer;
 
-            Vector<std::string> optimizers;
+            Vector<std::string> preprocessors;
         };  //  struct  Recipe
 
         using RoleWarningCallback = std::function<void(const std::string& message)>;
 
     private:
         PluginRegistry*     _registry = nullptr;
-        Recipe               _recipe;
-        RoleWarningCallback  _on_role_warning;
+        Recipe              _recipe;
+        RoleWarningCallback _on_role_warning;
 
     public:
         Calculator() = delete;

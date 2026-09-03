@@ -18,7 +18,7 @@ namespace Synapse {
         if (!_registry) throw std::runtime_error("Calculator: PluginRegistry is missing!");
         if (_recipe.lexer.empty()) throw std::runtime_error("Calculator: Lexer is missing in recipe!");
         if (_recipe.parser.empty()) throw std::runtime_error("Calculator: Parser is missing in recipe!");
-        if (_recipe.evaluator.empty()) throw std::runtime_error("Calculator: Evaluator is missing in recipe!");
+        if (_recipe.producer.empty()) throw std::runtime_error("Calculator: Evaluator is missing in recipe!");
     }
 
     Value Calculator::evaluate(const std::string& code, ExecutionContext* execution_context) {
@@ -50,7 +50,7 @@ namespace Synapse {
             return Value(0.0);
         }
 
-        for (const auto& opt_name : _recipe.optimizers) {
+        for (const auto& opt_name : _recipe.preprocessor) {
             auto optimizer = _registry->createVisitor(opt_name.c_str(), execution_context);
 
             if (_on_role_warning && optimizer->getRole() != IVisitor::Role::Preprocessor) {
@@ -63,16 +63,16 @@ namespace Synapse {
             ast->accept(*optimizer);
         }
 
-        auto evaluator = _registry->createVisitor(_recipe.evaluator.c_str(), execution_context);
+        auto producer = _registry->createVisitor(_recipe.producer.c_str(), execution_context);
 
-        if (_on_role_warning && evaluator->getRole() != IVisitor::Role::Producer) {
+        if (_on_role_warning && producer->getRole() != IVisitor::Role::Producer) {
             _on_role_warning(
-                "Evaluator '" + _recipe.evaluator +
-                "' has role Preprocessor, but is used as the final evaluator. "
+                "Evaluator '" + _recipe.producer +
+                "' has role Preprocessor, but is used as the final producer. "
                 "The returned value may not be meaningful.");
         }
 
-        Value result = ast->accept(*evaluator);
+        Value result = ast->accept(*producer);
 
         return result;
     }
