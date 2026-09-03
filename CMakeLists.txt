@@ -20,7 +20,7 @@ endif()
 
 add_subdirectory(utils)
 add_subdirectory(core)
-add_subdirectory(cli)
+add_subdirectory(ui)
 
 if(BUILD_TESTING)
     add_subdirectory(tests EXCLUDE_FROM_ALL)
