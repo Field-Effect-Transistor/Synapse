@@ -60,7 +60,7 @@ protected:
 
         std_recipe.lexer = "stdlib.Standard Lexer";
         std_recipe.parser = "stdlib.Standard Parser";
-        std_recipe.evaluator = "stdlib.Math Evaluator";
+        std_recipe.producer = "stdlib.Math Evaluator";
     }
 };
 

@@ -50,7 +50,7 @@ namespace Synapse {
             return Value(0.0);
         }
 
-        for (const auto& opt_name : _recipe.preprocessor) {
+        for (const auto& opt_name : _recipe.preprocessors) {
             auto optimizer = _registry->createVisitor(opt_name.c_str(), execution_context);
 
             if (_on_role_warning && optimizer->getRole() != IVisitor::Role::Preprocessor) {

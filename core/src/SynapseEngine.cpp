@@ -205,9 +205,9 @@ namespace Synapse {
         }
 
         Calculator::Recipe print_recipe = _impl->_active_session->recipe;
-        print_recipe.evaluator = printer_visitor_name;
+        print_recipe.producer = printer_visitor_name;
         
-        print_recipe.optimizers.clear();
+        print_recipe.preprocessors.clear();
 
         Calculator calc(&_impl->_plugin_registry, print_recipe);
 

@@ -110,8 +110,8 @@ TEST_F(CalculatorInitTest, ConstructorThrowsWhenRegistryIsNull) {
 }
 
 TEST_F(CalculatorInitTest, ConstructorThrowsOnIncompleteRecipe) {
-    Calculator::Recipe missing_lexer   = {"", "stdlib.Standard Parser", "stdlib.Math Evaluator"};
-    Calculator::Recipe missing_parser  = {"stdlib.Standard Lexer", "", "stdlib.Math Evaluator"};
+    Calculator::Recipe missing_lexer   = {"", "stdlib.Standard Parser", "stdlib.Math Producer"};
+    Calculator::Recipe missing_parser  = {"stdlib.Standard Lexer", "", "stdlib.Math Producer"};
     Calculator::Recipe missing_eval    = {"stdlib.Standard Lexer", "stdlib.Standard Parser", ""};
 
     EXPECT_THROW(Calculator(&registry, missing_lexer), std::runtime_error);
@@ -138,7 +138,7 @@ TEST_F(CalculatorEvaluateTest, ReturnsZeroWhenAstIsNull) {
     Calculator::Recipe null_ast_recipe = {
         "stdlib.Standard Lexer",
         "helper.NullParser",
-        "stdlib.Math Evaluator"
+        "stdlib.Math Producer"
     };
     
     Calculator calc(&registry, null_ast_recipe);
@@ -146,9 +146,9 @@ TEST_F(CalculatorEvaluateTest, ReturnsZeroWhenAstIsNull) {
     EXPECT_DOUBLE_EQ(res.getNumber(), 0.0);
 }
 
-TEST_F(CalculatorEvaluateTest, RunsOptimizers) {
+TEST_F(CalculatorEvaluateTest, RunsPreprocessors) {
     Calculator::Recipe opt_recipe = std_recipe;
-    opt_recipe.optimizers.push_back("helper.DummyOpt");
+    opt_recipe.preprocessors.push_back("helper.DummyOpt");
 
     Calculator calc(&registry, opt_recipe);
 
@@ -195,7 +195,7 @@ TEST_F(CalculatorEvaluateTest, TriggersWarningWhenProducerIsUsedAsOptimizer) {
     };
 
     Calculator::Recipe bad_opt_recipe = std_recipe;
-    bad_opt_recipe.optimizers.push_back("helper.DummyProducer");
+    bad_opt_recipe.preprocessors.push_back("helper.DummyProducer");
 
     Calculator calc(&registry, bad_opt_recipe, callback);
     calc.evaluate("10 + 20", global_context);
@@ -204,7 +204,7 @@ TEST_F(CalculatorEvaluateTest, TriggersWarningWhenProducerIsUsedAsOptimizer) {
     EXPECT_NE(warning_message.find("has role Producer, but is used as a Preprocessor"), std::string::npos);
 }
 
-TEST_F(CalculatorEvaluateTest, TriggersWarningWhenPreprocessorIsUsedAsEvaluator) {
+TEST_F(CalculatorEvaluateTest, TriggersWarningWhenPreprocessorIsUsedAsProducer) {
     bool warning_triggered = false;
     std::string warning_message = "";
 
@@ -214,13 +214,13 @@ TEST_F(CalculatorEvaluateTest, TriggersWarningWhenPreprocessorIsUsedAsEvaluator)
     };
 
     Calculator::Recipe bad_eval_recipe = std_recipe;
-    bad_eval_recipe.evaluator = "helper.DummyOpt";
+    bad_eval_recipe.producer = "helper.DummyOpt";
 
     Calculator calc(&registry, bad_eval_recipe, callback);
     calc.evaluate("10 + 20", global_context);
 
     EXPECT_TRUE(warning_triggered);
-    EXPECT_NE(warning_message.find("has role Preprocessor, but is used as the final evaluator"), std::string::npos);
+    EXPECT_NE(warning_message.find("has role Preprocessor, but is used as the final producer"), std::string::npos);
 }
 
 TEST_F(CalculatorEvaluateTest, NoWarningsForCorrectRoles) {
@@ -228,7 +228,7 @@ TEST_F(CalculatorEvaluateTest, NoWarningsForCorrectRoles) {
     auto callback = [&](const std::string&) { warning_triggered = true; };
 
     Calculator::Recipe good_recipe = std_recipe;
-    good_recipe.optimizers.push_back("helper.DummyOpt");
+    good_recipe.preprocessors.push_back("helper.DummyOpt");
 
     Calculator calc(&registry, good_recipe, callback);
     calc.evaluate("10 + 20", global_context);
