@@ -21,7 +21,8 @@ namespace Synapse::Repl {
 
         enum class PluginCheckResult : uint8_t {
             Passed,
-            Failed,
+            LoadError,
+            Crashed,
             SandboxError
         };  //  enum    PluginCheckResult
 
@@ -46,6 +47,9 @@ namespace Synapse::Repl {
         WorkspaceManager& operator=(const WorkspaceManager&) = delete;
         WorkspaceManager& operator=(WorkspaceManager&&) = delete;
 
+        const std::string& getPluginsDir() const {
+            return _plugins_dir;
+        }
 
         //  ------------------------
         //      Plugin Control      
@@ -54,7 +58,9 @@ namespace Synapse::Repl {
         PluginCheckResult checkPlugin(const std::string& path) const;
 
         std::vector<std::string> getAutoloadedPlugins() const;
+        std::vector<std::string> getQuarantinedPlugins() const;
         std::vector<std::string> getInstalledPlugins() const;
+        
         bool enableAutoload(const std::string& plugin_name) const;
         bool disableAutoload(const std::string& plugin_name) const;
 

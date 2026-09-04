@@ -18,7 +18,14 @@
 using json      = nlohmann::json;
 namespace fs    = std::filesystem;
 
+#ifdef _WIN32
+    constexpr const char* PLUGIN_EXT = ".dll";
+#else
+    constexpr const char* PLUGIN_EXT = ".so";
+#endif
+
 namespace {
+    
 
     bool erase(std::vector<std::string>& vector, const std::string& str) {
         if(const auto& it = std::find(vector.begin(), vector.end(), str); it != vector.end()) {
@@ -115,6 +122,10 @@ namespace Synapse::Repl {
     }
 
     WorkspaceManager::PluginCheckResult WorkspaceManager::checkPlugin(const std::string& path) const {
+        if (!fs::exists(path)) {
+            throw WorkspaceError("Cannot check plugin: File does not exist at '" + path + "'");
+        }
+
         pid_t process_id = fork();
         switch (process_id) {
             case 0: {   //  child
@@ -125,6 +136,9 @@ namespace Synapse::Repl {
                         IPlugin::Ptr plugin = lib.getSymbol();
                     }
                     _exit(0);
+                } catch (const std::exception& e) {
+                    std::cerr << "\n[Sandbox Debug] Load error: " << e.what() << "\n";
+                    _exit(1);
                 } catch (...) {
                     _exit(1);
                 }
@@ -137,18 +151,19 @@ namespace Synapse::Repl {
             default: {  //  parent
                 int status;
                 waitpid(process_id, &status, 0);
+                
                 if (WIFEXITED(status)) {
                     if (WEXITSTATUS(status) == 0) {
-                        return PluginCheckResult::Passed;   //  exit(0)
+                        return PluginCheckResult::Passed;
                     } else {
-                        return PluginCheckResult::Failed;   //  exit(1)
+                        return PluginCheckResult::LoadError;
                     }
                 } else if (WIFSIGNALED(status)) {
-                    return PluginCheckResult::Failed;   //  OS sigfaulted
+                    return PluginCheckResult::Crashed;
                 }
             }
 
-            return PluginCheckResult::SandboxError; //  for next windows support or another Linux states
+            return PluginCheckResult::SandboxError;
         }
     }
 
@@ -199,25 +214,28 @@ namespace Synapse::Repl {
 
     std::vector<std::string> WorkspaceManager::getAutoloadedPlugins() const {
         AppConfig config_struct = _readConfig();
-        
         std::vector<std::string> res;
         res.reserve(config_struct.autoload_plugins.size());
 
-        for (const auto& plugin : config_struct.autoload_plugins) {
-            res.push_back(_plugins_dir + plugin);
+        for (const auto& plugin_stem : config_struct.autoload_plugins) {
+            res.push_back((fs::path(_plugins_dir) / (plugin_stem + PLUGIN_EXT)).string());
         }
-
         return res;
     }
 
     std::vector<std::string> WorkspaceManager::getInstalledPlugins() const {
         std::vector<std::string> res;
         for(const auto& entry : fs::directory_iterator(_plugins_dir)) {
-            if (entry.is_regular_file()) {
-                res.push_back(entry.path().string());
+            if (entry.is_regular_file() && entry.path().extension().string() == PLUGIN_EXT) {
+                res.push_back(entry.path().stem().string());
             }
         }
         return res;
+    }
+
+    std::vector<std::string> WorkspaceManager::getQuarantinedPlugins() const {
+        AppConfig config_struct = _readConfig();
+        return config_struct.quarantined_plugins;
     }
 
     bool WorkspaceManager::enableAutoload(const std::string& plugin_name) const {
@@ -233,36 +251,30 @@ namespace Synapse::Repl {
 
     bool WorkspaceManager::disableAutoload(const std::string& plugin_name) const {
         AppConfig config_struct = _readConfig();
-        return erase(config_struct.autoload_plugins, plugin_name);
+        
+        if (erase(config_struct.autoload_plugins, plugin_name)) {
+            _writeConfig(config_struct);
+            return true;
+        }
+        return false;
     }
 
     void WorkspaceManager::installPlugin(const std::string& source_path, bool auto_load) const {
-        fs::path plugin_path = fs::path(source_path);
-        if(!fs::exists(plugin_path)) {
-            throw WorkspaceError("Plugin " + plugin_path.string() + "doesn`t exist");
-        }
+        fs::path src = fs::path(source_path);
+        if(!fs::exists(src)) throw WorkspaceError("Plugin " + src.string() + " doesn`t exist");
         
-        std::string plugin_name = fs::path(plugin_path).filename().string();
-        fs::path target_path = fs::path(_plugins_dir) / plugin_name;
+        std::string plugin_stem = src.stem().string(); 
+        
+        fs::path target_path = fs::path(_plugins_dir) / (plugin_stem + PLUGIN_EXT);
 
-        if (fs::exists(target_path)) {
-            throw WorkspaceError("Plugin " + plugin_name + " already exists");
-        }
+        if (fs::exists(target_path)) throw WorkspaceError("Plugin " + plugin_stem + " already exists");
 
         std::error_code ec;
-        fs::copy_file(
-            source_path,
-            fs::path(_plugins_dir) / plugin_name,
-            ec
-        );
+        fs::copy_file(src, target_path, ec);
 
-        if (ec) {
-            throw WorkspaceError("Failed to install plugin: " + ec.message());
-        }
+        if (ec) throw WorkspaceError("Failed to install plugin: " + ec.message());
 
-        if (auto_load) {
-            enableAutoload(plugin_name);
-        }
+        if (auto_load) enableAutoload(plugin_stem); 
     }
 
     void WorkspaceManager::uninstallPlugin(const std::string& plugin_filename) const {
@@ -280,7 +292,7 @@ namespace Synapse::Repl {
             _writeConfig(config_struct);
         }
 
-        if (fs::path plugin_path = fs::path(_plugins_dir) / plugin_filename; fs::exists(plugin_path)) {
+        if (fs::path plugin_path = fs::path(_plugins_dir) / (plugin_filename + PLUGIN_EXT); fs::exists(plugin_path)) {
             std::error_code ec;
             fs::remove(plugin_path, ec);
 
