@@ -23,6 +23,7 @@ target_link_libraries(SynapseCoreTests
     PRIVATE
     SynapseCore
     GTest::gtest_main
+    SynapseCompilerFlags
 )
 
 target_compile_definitions(SynapseCoreTests PRIVATE

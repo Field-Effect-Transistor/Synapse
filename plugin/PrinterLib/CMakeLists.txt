@@ -1,4 +1,5 @@
-# plugin/PrinterLib/CMakeLists.txt
+# /plugin/PrinterLib/CMakeLists.txt
+
 add_library(PrinterLib_Objects OBJECT
     src/ASTPrinter.cpp
     src/ASTTreePrinter.cpp
@@ -6,10 +7,11 @@ add_library(PrinterLib_Objects OBJECT
     src/PrinterLibPlugin.cpp
 )
 
-target_link_libraries(PrinterLib_Objects PUBLIC SynapseCore)
+target_link_libraries(PrinterLib_Objects PUBLIC SynapseCore SynapseCompilerFlags)
 target_include_directories(PrinterLib_Objects PUBLIC src)
 
 add_library(PrinterLib MODULE $<TARGET_OBJECTS:PrinterLib_Objects>)
+target_link_libraries(PrinterLib PRIVATE SynapseCompilerFlags)
 
 set_target_properties(PrinterLib PROPERTIES
     PREFIX ""
@@ -29,6 +31,7 @@ if (TARGET GTest::gtest_main)
     target_link_libraries(PrinterLib_Tests PRIVATE 
         PrinterLib_Objects
         GTest::gtest_main
+        SynapseCompilerFlags
     )
     
     add_dependencies(PrinterLib_Tests PrinterLib)

@@ -6,6 +6,7 @@ target_link_libraries(SynapseUtilsTests
     PRIVATE
     SynapseUtils
     GTest::gtest_main
+    SynapseCompilerFlags
 )
 
 include(GoogleTest)

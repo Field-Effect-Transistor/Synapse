@@ -1,4 +1,4 @@
-#   /ui/repl/CMakeLists.txt
+# /ui/repl/CMakeLists.txt
 
 include(FetchContent)
 
@@ -18,7 +18,9 @@ add_executable(synapse-repl
 )
 
 target_include_directories(synapse-repl PRIVATE include)
+
 target_link_libraries(synapse-repl PRIVATE
     SynapseCore
+    SynapseCompilerFlags
     nlohmann_json::nlohmann_json
 )
