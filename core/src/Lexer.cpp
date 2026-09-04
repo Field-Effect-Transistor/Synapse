@@ -48,6 +48,10 @@ namespace Synapse::Internal {
                     token = Token(StandardToken::SUB, 0, "-", _col, _row);
                     break;
                 }
+                case '=': {
+                    token = Token(StandardToken::ASSIGN, 0, "=", _col, _row);
+                    break;
+                }
                 case '*': {
                     token = Token(StandardToken::MUL, 0, "*", _col, _row);
                     break;

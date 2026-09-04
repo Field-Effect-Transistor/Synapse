@@ -56,10 +56,12 @@ namespace Synapse::Internal {
             return false;
         }
 
+        IASTNode::Ptr   _parseAssignment();
         IASTNode::Ptr   _parseExpression();
         IASTNode::Ptr   _parseTerm();
         IASTNode::Ptr   _parsePower();
-        IASTNode::Ptr   _parseFactor();
+        IASTNode::Ptr   _parseFactor(); 
+        IASTNode::Ptr   _parseUnary();
         IASTNode::Ptr   _parsePrim();
 
         void destroy() override;

@@ -13,6 +13,7 @@ namespace Synapse {
     template<typename DERIVED>
     struct ASTNodeBase : public IASTNode {
         inline static const char type{0};
+        static const void* type_id() { return static_cast<const void*>(&type); }
 
         virtual bool compare(const DERIVED&) const = 0;
 

@@ -33,6 +33,7 @@ namespace Synapse {
         static constexpr TokenType  MOD         = 204;
         static constexpr TokenType  POW         = 205;
         static constexpr TokenType  PERCENT     = 206;
+        static constexpr TokenType  ASSIGN      = 207;
 
         static constexpr TokenType  USER_DEFINED_START = 1000;
 
@@ -55,6 +56,7 @@ namespace Synapse {
                 case MOD:         return "MOD";
                 case PERCENT:     return "PERCENT";
                 case POW:         return "POW";
+                case ASSIGN:      return "ASSIGN"; 
                 default:          return "USER_DEFINED";    //! Plugins
             }
         }

@@ -50,10 +50,26 @@ namespace Synapse::Internal {
     }
 
     Value MathEvaluator::visit(BinaryNode& node) {
+        TokenType type = node._token.type;
+
+        if (type == StandardToken::ASSIGN) {
+            Value right = node._right->accept(*this);
+            
+            VariableNode* var_node = static_cast<VariableNode*>(node._left.get());
+            std::string var_name = var_node->_token.lexeme;
+
+            if (_context->hasLocalVariable(var_name.c_str())) {
+                _context->assignVariable(var_name.c_str(), Value(right));
+            } else {
+                _context->defineVariable(var_name.c_str(), Value(right), false); 
+            }
+            
+            // Return right value to support chained assignments (a = b = c)
+            return right;
+        }
+
         Value left = node._left->accept(*this);
         Value right = node._right->accept(*this);
-
-        TokenType type = node._token.type;
 
         double l_val = left.getNumber();
         double r_val = right.getNumber();
