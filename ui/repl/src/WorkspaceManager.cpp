@@ -8,9 +8,11 @@
 #include <nlohmann/json.hpp>
 #include <algorithm>
 
-//  posix
-#include <unistd.h>
-#include <sys/wait.h>
+#ifndef _WIN32
+    //  posix
+    #include <unistd.h>
+    #include <sys/wait.h>
+#endif
 
 //  synapse
 #include <synapse/DynamicLibrary.hpp>
@@ -126,6 +128,7 @@ namespace Synapse::Repl {
             throw WorkspaceError("Cannot check plugin: File does not exist at '" + path + "'");
         }
 
+#ifndef _WIN32
         pid_t process_id = fork();
         switch (process_id) {
             case 0: {   //  child
@@ -165,6 +168,8 @@ namespace Synapse::Repl {
 
             return PluginCheckResult::SandboxError;
         }
+#endif
+        return PluginCheckResult::SandboxError;
     }
 
     WorkspaceManager::AppConfig WorkspaceManager::_readConfig() const {

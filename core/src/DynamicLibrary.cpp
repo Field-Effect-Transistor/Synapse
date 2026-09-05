@@ -5,30 +5,61 @@
 #include "synapse/interface/IPlugin.hpp"
 
 #include <cassert>
-#include <dlfcn.h>
 #include <stdexcept>
+#include <string>
 
-typedef void* handler_t;
+//  ====================
+//      OS API LAYER
+//  ====================
+#ifdef _WIN32
+    #include <windows.h>
+    typedef HMODULE os_handle_t;
+
+    namespace OS {
+        inline os_handle_t load_library(const char* path) { return LoadLibraryA(path); }
+        inline void free_library(os_handle_t handle) { FreeLibrary(handle); }
+        inline void* get_symbol(os_handle_t handle, const char* name) { return (void*)GetProcAddress(handle, name); }
+        
+        inline std::string get_last_error() {
+            return "Windows Error Code: " + std::to_string(GetLastError());
+        }
+        inline void reset_error() {}
+    }
+#else
+    #include <dlfcn.h>
+    typedef void* os_handle_t;
+
+    namespace OS {
+        inline os_handle_t load_library(const char* path) { return dlopen(path, RTLD_LAZY); }
+        inline void free_library(os_handle_t handle) { dlclose(handle); }
+        inline void* get_symbol(os_handle_t handle, const char* name) { return dlsym(handle, name); }
+        
+        inline std::string get_last_error() {
+            const char* err = dlerror();
+            return err ? std::string(err) : "Unknown OS error";
+        }
+        inline void reset_error() { dlerror(); }
+    }
+#endif
+// ==========================================
+
 
 namespace Synapse {
 
     struct DynamicLibrary::Impl {
-        handler_t _handler = nullptr;
-    };  //  struct DynamicLibrary::Impl
+        os_handle_t _handler = nullptr;
+    };
 
     DynamicLibrary::DynamicLibrary(const char* path) : _impl(new Impl) {
         if (!path) {
             throw std::runtime_error("[DynamicLibrary] path can not be nullptr");
         }
 
-        dlerror();
-
-        handler_t handler = dlopen(path, RTLD_LAZY);
+        OS::reset_error();
+        os_handle_t handler = OS::load_library(path);
+        
         if (!handler) {
-            const char* err = dlerror();
-            throw std::runtime_error(
-                "[DynamicLibrary] dlopen crash with next error: " +
-                std::string(err ? err : "unknown dlopen error"));
+            throw std::runtime_error("[DynamicLibrary] Library load crash: " + OS::get_last_error());
         }
 
         _impl->_handler = handler;
@@ -38,7 +69,7 @@ namespace Synapse {
         assert(_impl && "DynamicLibrary::_impl must never be null");
 
         if (_impl->_handler) {
-            dlclose(_impl->_handler);
+            OS::free_library(_impl->_handler);
         }
     }
 
@@ -64,26 +95,19 @@ namespace Synapse {
         assert(_impl && "DynamicLibrary::_impl must never be null");
 
         if (!_impl->_handler) {
-            throw std::runtime_error(
-                "[DynamicLibrary] library is not loaded (moved-from or already closed)");
+            throw std::runtime_error("[DynamicLibrary] library is not loaded (moved-from or already closed)");
         }
 
         using CreatePluginFn = IPlugin* (*)();
 
-        dlerror();
-        void* symbol = dlsym(_impl->_handler, "create_plugin");
+        OS::reset_error();
+        void* symbol = OS::get_symbol(_impl->_handler, "create_plugin");
 
-        const char* raw_err = dlerror();
-        const std::string err_msg = raw_err ? raw_err : "";
-
-        if (!symbol || !err_msg.empty()) {
-            if (_impl->_handler) {
-                dlclose(_impl->_handler);
-                _impl->_handler = nullptr;
-            }
-            throw std::runtime_error(
-                "[DynamicLibrary] dlsym error: " +
-                (err_msg.empty() ? std::string("symbol 'create_plugin' not found") : err_msg));
+        if (!symbol) {
+            std::string err_msg = OS::get_last_error();
+            OS::free_library(_impl->_handler);
+            _impl->_handler = nullptr;
+            throw std::runtime_error("[DynamicLibrary] Symbol 'create_plugin' not found: " + err_msg);
         }
 
         auto factory = reinterpret_cast<CreatePluginFn>(symbol);
@@ -95,5 +119,4 @@ namespace Synapse {
 
         return IPlugin::Ptr(plugin);
     }
-
 }   //  namespace   Synapse

@@ -5,7 +5,7 @@
 #include <cstring>
 #include <algorithm>
 
-static int stricmp(char const *a, char const *b) {
+static int synapse_stricmp(char const *a, char const *b) {
     for(;;++a, ++b) {
         int d = tolower(static_cast<unsigned int>(*a)) - tolower(static_cast<unsigned int>(*b));
         if (d != 0 || !*a) {
@@ -175,7 +175,7 @@ namespace Synapse::Internal {
 
                         while (true) {
                             if (!_prayForTheChunk()) {
-                                if(!stricmp(token.lexeme.c_str(), "mod")) {
+                                if(!synapse_stricmp(token.lexeme.c_str(), "mod")) {
                                     token.type = StandardToken::MOD;
                                 }
                                 return token;
@@ -191,7 +191,7 @@ namespace Synapse::Internal {
                             ++_pos; ++_col;
                         }
 
-                        if(!stricmp(token.lexeme.c_str(), "mod")) {
+                        if(!synapse_stricmp(token.lexeme.c_str(), "mod")) {
                             token.type = StandardToken::MOD;
                         }
 
